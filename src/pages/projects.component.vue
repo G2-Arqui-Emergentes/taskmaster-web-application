@@ -1,16 +1,15 @@
 <script>
-import ProjectCards from '@/components/projects/project-cards.component.vue'
+import ProjectsList from '@/components/projects/ProjectsList.vue'
 
 export default {
   name: "projects",
-  components: {ProjectCards},
+  components: { ProjectsList },
 }
 </script>
 
 <template>
-  <ProjectCards></ProjectCards>
+  <ProjectsList />
 </template>
 
 <style scoped>
-
 </style>

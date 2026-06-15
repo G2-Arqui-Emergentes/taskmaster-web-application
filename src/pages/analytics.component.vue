@@ -1,14 +1,9 @@
-<script>
-import AnalyticsContent from "@/components/analytics/analytics-content/analytics-content.component.vue";
-
-export default {
-  name: "analytics",
-  components: {AnalyticsContent}
-}
+<script setup>
+import AnalyticsContent from '@/components/analytics/AnalyticsContent.vue'
 </script>
 
 <template>
-  <analytics-content></analytics-content>
+  <AnalyticsContent />
 </template>
 
 <style scoped>

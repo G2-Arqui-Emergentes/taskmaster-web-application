@@ -116,7 +116,7 @@ export async function addTask(projectId, newTask) {
 
 export async function deleteTask(projectID, taskID) {
     try {
-        console.log("Eliminando Task ID:", taskID);
+        console.log("Eliminando TaskCard ID:", taskID);
         const headers = getHeaders();
         const response = await axios.delete(
             `${environment.baseUrl}/tasks/TaskItems/${taskID}`,
@@ -147,7 +147,7 @@ export async function editTask(projectID, taskData) {
             projectId: parseInt(projectID, 10)
         };
 
-        console.log("Editando Task:", taskBody);
+        console.log("Editando TaskCard:", taskBody);
         const headers = getHeaders();
 
         const response = await axios.put(

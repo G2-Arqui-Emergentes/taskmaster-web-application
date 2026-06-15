@@ -122,7 +122,7 @@ export default {
 <template>
   <div class="setup-container h-screen flex">
     <div class="logo-container flex">
-      <img src="../../assets/taskmaster-logo.png" alt="logo" style="width: 100px; height: auto;" />
+      <img src="../../assets/taskmaster-logo.svg" alt="logo" style="width: 100px; height: auto;" />
       <span class="font-bold text-4xl">TaskMaster</span>
     </div>
     <form class="card flex gap-3" @submit.prevent="onSubmitSetup">

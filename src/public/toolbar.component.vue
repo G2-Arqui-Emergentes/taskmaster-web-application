@@ -20,10 +20,17 @@ export default {
       return this.$store.state.user || {};
     },
     roleLabel() {
-      const role = this.user?.role;
-      if (role === 0 || role === '0') return 'Manager';
-      if (role === 1 || role === '1') return 'Team Member';
-      return role || ''
+      const roles = this.user?.roles || [];
+      if (roles.includes('ROLE_LEADER')) return 'Leader';
+      if (roles.includes('ROLE_MEMBER')) return 'Member';
+      if (roles.includes('ROLE_ADMIN')) return 'Admin';
+      return '';
+    },
+    userAvatar() {
+      return this.user.imageUrl || this.user.profileImg || 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
+    },
+    userName() {
+      return this.user.name || this.user.email?.split('@')[0] || 'User';
     }
   },
   methods: {
@@ -39,9 +46,7 @@ export default {
       if (!companyId) return;
       try {
         const response = await this.teamMemberService.getMembers(companyId);
-
         const membersList = Array.isArray(response) ? response : response?.data;
-
         if (Array.isArray(membersList)) {
           this.members = membersList.length;
         } else {
@@ -74,12 +79,17 @@ export default {
 <template>
   <pv-toolbar class="header h-7rem px-4 w-full">
     <template #start>
-      <div class=" flex flex-row align-items-center gap-4">
-        <i class="pi pi-bars" @click="handleToggle" style="color: slateblue; font-size: 1.5rem; cursor: pointer"></i>
+      <div class="flex flex-row align-items-center gap-4">
+        <i class="pi pi-bars menu-toggle-icon" @click="handleToggle"></i>
         <div class="flex flex-row align-items-center gap-3">
-          <img class="block h-2rem w-3rem" src="../assets/taskmaster-logo.png" alt="TaskMaster"/>
+          <img
+              class="block h-3rem w-4rem"
+              src="../assets/taskmaster-logo.svg"
+              alt="TaskMaster"
+              style="filter: brightness(0) saturate(100%) invert(18%) sepia(98%) saturate(4425%) hue-rotate(348deg) brightness(94%) contrast(98%);"
+          />
           <div class="title-container flex flex-column justify-content-center line-height-2" style="gap: 2px">
-            <p class="title font-semibold " style="letter-spacing: 1px;">TaskMaster</p>
+            <p class="title font-semibold" style="letter-spacing: 1px;">TaskMaster</p>
             <span class="text-sm capitalize" style="letter-spacing: .8px;">{{ roleLabel }}</span>
           </div>
         </div>
@@ -89,7 +99,7 @@ export default {
       <div class="flex flex-row gap-3">
         <pv-avatar aria-label="yesifoto"
                    class="w-3rem h-3rem align-self-center user-img"
-                   :image="user.profileImg  || 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg'"
+                   :image="userAvatar"
                    shape="circle"
                    @click="navigateToProfile"
                    :class="{ active: $route.path === '/profile' }"/>
@@ -97,7 +107,7 @@ export default {
           <p class="font-medium user-name"
              @click="navigateToProfile"
              :class="{ active: $route.path === '/profile' }">
-            {{ user.name }}</p>
+            {{ userName }}</p>
           <div class="flex flex-row align-items-center gap-3">
             <p class="text-sm text-green-600 font-normal">{{ user?.companyName }}</p>
             <div class="members-quantity">
@@ -111,7 +121,6 @@ export default {
 </template>
 
 <style scoped>
-
 .header {
   --brand-500: #b22222;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -133,9 +142,16 @@ export default {
   font-size: 1rem;
 }
 
-.pi-bars {
+.menu-toggle-icon {
+  color: #000000;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
   display: none;
-  color: #ff4d4f;
+}
+
+.menu-toggle-icon:hover {
+  color: var(--brand-500);
 }
 
 .members-quantity span {
@@ -171,11 +187,9 @@ export default {
   color: #ff4d4f;
 }
 
-@media (max-width: 1024px) {
-
-  .pi-bars {
+@media (max-width: 1023px) {
+  .menu-toggle-icon {
     display: block;
   }
 }
-
 </style>

@@ -3,13 +3,53 @@ import {environment} from "@/environment/environment.js";
 
 export class UserService {
 
-    http = null;
     constructor() {
         this.http = axios.create({
             baseURL: environment.baseUrl
-        })
+        });
+
+        this.http.interceptors.request.use(config => {
+            const token = this.normalizeToken(localStorage.getItem('token'));
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        });
     }
 
+    normalizeToken(token) {
+        if (!token) return '';
+        return token.toString().trim().replace(/^"|"$/g, '');
+    }
+
+    setSession(token, user = null) {
+        const normalizedToken = this.normalizeToken(token);
+        if (normalizedToken) {
+            localStorage.setItem('token', normalizedToken);
+        }
+
+        if (user) {
+            localStorage.setItem('user', JSON.stringify(user));
+        }
+    }
+
+    clearSession() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+    }
+
+    decodeJwtPayload(token) {
+        try {
+            const normalized = this.normalizeToken(token);
+            if (!normalized || !normalized.includes('.')) return null;
+            const payload = normalized.split('.')[1];
+            const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+            const json = atob(base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '='));
+            return JSON.parse(json);
+        } catch (error) {
+            return null;
+        }
+    }
 
     async signUpUser(user) {
         try {
@@ -22,13 +62,8 @@ export class UserService {
                 name: (user.name ?? user.firstName ?? "").toString().trim(),
                 lastName: (user.lastName ?? "").toString().trim()
             };
-
-            console.log('Sending sign-up payload:', signUpPayload);
             return await this.http.post('/api/v1/authentication/sign-up', signUpPayload);
         } catch(e) {
-            if (e.response) {
-                console.error('Backend Error:', e.response.data);
-            }
             return null;
         }
     }
@@ -36,66 +71,38 @@ export class UserService {
     async signInUser(email, password) {
         try {
             const signInPayload = {
-                email: email,
-                password: password
+                email: (email ?? '').toString().trim(),
+                password: (password ?? '').toString()
             };
-
-            console.log('Sending sign-in payload:', signInPayload);
-
             const response = await this.http.post('/api/v1/authentication/sign-in', signInPayload);
 
-            if (response.data && (response.data.email || response.data.username)) {
-                const identifier = response.data.email || response.data.username;
-                console.log("Login exitoso. Buscando usuario completo...");
-                try {
-                    await this.getUserByEmail(identifier);
-                } catch (profileError) {
-                    console.error("No se pudo cargar el usuario:", profileError);
-                }
+            if (response.data && response.data.token) {
+                this.setSession(response.data.token);
             }
 
             return response;
         } catch (e) {
-            if (e.response) {
-                console.error('Backend 400 Sign-In Response Data (Validation Errors):', e.response.data);
-                console.error('Backend Status:', e.response.status);
-            }
             return e;
         }
     }
 
-
     async getUserByEmail(email) {
         const headers = this.getHeadersAuthorization();
         try {
-            const response = await this.http.get(`/api/v1/users/email/${encodeURIComponent(email)}`, { headers });
-
-            console.log('Usuario recuperado por email:', response.data);
-
+            const normalizedEmail = (email ?? '').toString().trim();
+            const response = await this.http.get(`/api/v1/users/email/${encodeURIComponent(normalizedEmail)}`, { headers });
             this.setUser(response.data);
-
             return response;
         } catch (error) {
-            console.error(`Error al obtener usuario por email ${email}:`, error);
             throw error;
         }
     }
 
     async getUserById(id) {
         const headers = this.getHeadersAuthorization();
-        console.log('user id to retrieve', id);
         try {
-            const response = await this.http.get(`/api/v1/users/${id}`, { headers });
-
-            console.log('User response:', response);
-            this.setUser(response.data);
-            return response;
+            return await this.http.get(`/api/v1/users/${id}`, { headers });
         } catch (error) {
-            if (error.response) {
-                console.error(`Error ${error.response.status} al obtener el usuario con id ${id}:`, error.response.data);
-            } else {
-                console.error(`Error de red al obtener el usuario con id ${id}:`, error.message);
-            }
             throw error;
         }
     }
@@ -104,23 +111,19 @@ export class UserService {
         const headers = this.getHeadersAuthorization();
 
         const userbody = {
-            id: user.id ?? user.userId,
-            email: (user.email ?? "").toString().trim(),
-            roles: Array.isArray(user.roles)
-                ? user.roles
-                : [user.role].filter(Boolean),
-            name: (user.name ?? user.firstName ?? "").toString().trim(),
+            name: (user.name ?? "").toString().trim(),
             lastName: (user.lastName ?? "").toString().trim(),
-            imageUrl: (user.imageUrl ?? user.profileImg ?? "").toString().trim(),
-            salary: user.salary ?? 0,
-            projectIds: Array.isArray(user.projectIds) ? user.projectIds : []
+            imageUrl: (user.imageUrl ?? "").toString().trim(),
+            salary: user.salary ?? 0
         };
 
-        const resp = await this.http.put(`/api/v1/users`, userbody, { headers });
-
-        this.setUser(resp.data);
-
-        return resp.data;
+        try {
+            const resp = await this.http.put(`/api/v1/users`, userbody, { headers });
+            this.setUser(resp.data);
+            return resp.data;
+        } catch (error) {
+            throw error;
+        }
     }
 
     async getAllUsers() {
@@ -128,15 +131,12 @@ export class UserService {
             const headers = this.getHeadersAuthorization();
             return await this.http.get('/api/v1/users', { headers });
         } catch (error) {
-            console.error('Error al obtener todos los usuarios:', error);
             throw error;
         }
     }
 
-
-
     getHeadersAuthorization() {
-        const token = localStorage.getItem('token');
+        const token = this.normalizeToken(localStorage.getItem('token'));
         return {
             "Authorization": token ? `Bearer ${token}` : '',
             "Content-Type": "application/json"
@@ -145,6 +145,9 @@ export class UserService {
 
     setUser(user) {
         localStorage.setItem('user', JSON.stringify(user));
+    }
 
+    getCurrentUser() {
+        return JSON.parse(localStorage.getItem('user') || '{}');
     }
 }
