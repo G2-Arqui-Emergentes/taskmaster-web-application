@@ -32,7 +32,7 @@ export default {
   <div class="subscription-container min-h-screen h-full flex flex-column align-items-center gap-5">
     <div class="subscription-box flex flex-column gap-6 py-5">
       <div class="logo-container flex">
-        <img src="../../assets/taskmaster-logo.png" alt="logo" style="width: 100px; height: auto;" />
+        <img src="../../assets/taskmaster-logo.svg" alt="logo" style="width: 100px; height: auto;" />
         <span class="font-bold text-4xl">TaskMaster</span>
       </div>
       <div class="card flex">
