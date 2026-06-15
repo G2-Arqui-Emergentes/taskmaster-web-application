@@ -18,38 +18,48 @@ export default {
   methods: {
     async handleSubmitLogin() {
       this.isRegistered = false;
+      const normalizedEmail = (this.email ?? '').toString().trim();
 
       let res;
       try {
-        res = await this.userService.signInUser(this.email, this.password);
+        res = await this.userService.signInUser(normalizedEmail, this.password);
       } catch (err) {
         this.message_error = err?.response?.data ?? err?.message ?? "No se pudo contactar al servidor.";
         this.showDialog = true;
         return;
       }
 
-      // Respuesta backend
       if (res?.status === 200) {
-        this.$store.commit("setToken", res.data.token);
-        const userId = res.data?.id ?? res.data?.userId ?? res.data?.user?.id;
+        const token = res.data.token;
+        localStorage.setItem('token', token);
 
-        if (userId !== undefined && userId !== null) {
-          this.$store.commit("setUser", userId);
-        } else if (res.data?.email) {
-          await this.userService.getUserByEmail(res.data.email);
+        try {
+          const userResponse = await this.userService.getUserByEmail(normalizedEmail);
+          const userData = userResponse.data;
+
+          if (!userData.roles || userData.roles.length === 0) {
+            userData.roles = ['ROLE_MEMBER'];
+          }
+          if (!userData.projectIds || userData.projectIds.length === 0) {
+            userData.projectIds = [];
+          }
+
+          this.$store.commit('setUserData', userData);
+
+          this.isRegistered = true;
+          this.$router.push("/home");
+        } catch (error) {
+          this.userService.clearSession();
+          this.message_error = "Could not load user data";
+          this.showDialog = true;
         }
-
-        this.isRegistered = true;
-        this.$router.push("/home");
       } else {
-        // Si el backend rechazó el captcha o credenciales
         const msg = res?.response?.data || "Login failed";
         this.message_error = typeof msg === "string" ? msg : "Login failed";
         this.showDialog = true;
-        await this.resetAndRerenderCaptcha(); // <--
+        await this.resetAndRerenderCaptcha();
       }
     },
-
 
     validateForm() {
       this.formValid = this.email !== "" && this.password !== "";
@@ -63,8 +73,6 @@ export default {
 
   mounted() {
     const gtagId = import.meta.env.VITE_GTAG;
-    console.log("Google Analytics in Login ID:", gtagId);
-    console.log("NODE_ENV:", import.meta.env.MODE);
   },
 };
 </script>
@@ -72,7 +80,7 @@ export default {
 <template>
   <div class="login-container h-screen flex">
     <div class="logo-container flex">
-      <img src="../../assets/taskmaster-logo.png" alt="logo" style="width: 100px; height: auto;" />
+      <img src="../../assets/taskmaster-logo.svg" alt="logo" style="width: 100px; height: auto; filter: brightness(0) saturate(100%) invert(18%) sepia(98%) saturate(4425%) hue-rotate(348deg) brightness(94%) contrast(98%);" />
       <span class="font-bold text-3xl">TaskMaster</span>
     </div>
 

@@ -1,14 +1,26 @@
-<script>
-import TeamContent from "@/components/team/team-content.component.vue";
+<script setup>
+import { ref } from 'vue'
+import TeamProjectsList from '@/components/team/TeamProjectsList.vue'
+import TeamMembersList from '@/components/team/TeamMembersList.vue'
 
-export default {
-  name: "team-page",
-  components: {TeamContent},
+const selectedProject = ref(null)
+
+const selectProject = (project) => {
+  selectedProject.value = project
 }
 </script>
 
 <template>
-  <team-content></team-content>
+  <TeamProjectsList
+      v-if="!selectedProject"
+      @project-selected="selectProject"
+  />
+
+  <TeamMembersList
+      v-else
+      :project="selectedProject"
+      @back="selectedProject = null"
+  />
 </template>
 
 <style scoped>

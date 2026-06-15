@@ -26,6 +26,7 @@ export default {
         confirmPassword: '',
         role: '',
       },
+      success_message: 'Your account has been created successfully!'
     }
   },
   methods: {
@@ -73,7 +74,7 @@ export default {
 <template>
   <div class="signup-container min-h-screen flex">
     <div class="logo-container flex">
-      <img src="../../assets/taskmaster-logo.png" alt="logo" style="width: 100px; height: auto;" />
+      <img src="../../assets/taskmaster-logo.svg" alt="logo" style="width: 100px; height: auto; filter: brightness(0) saturate(100%) invert(18%) sepia(98%) saturate(4425%) hue-rotate(348deg) brightness(94%) contrast(98%);" />
       <span class="font-bold text-4xl">TaskMaster</span>
     </div>
     <div class="card flex">
@@ -82,7 +83,6 @@ export default {
 
       <form @submit.prevent>
 
-        <!-- FORMULARIO DE REGISTRO -->
         <div class="flex flex-column gap-3 align-items-center">
           <div class="user-name-container">
             <div class="input-container">
@@ -128,7 +128,6 @@ export default {
           <p v-if="apiError" class="error-message text-center mt-3">{{ apiError }}</p>
         </div>
 
-        <!-- BOTÓN DE REGISTRO -->
         <div class="flex flex-row gap-3 justify-content-center align-items-center mt-4">
           <button type="button" class="button p-3" style="color: #fff;"
                   @click="onSubmitRegister" :disabled="isSubmitting">

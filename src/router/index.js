@@ -3,7 +3,7 @@ import Home from '../pages/home.component.vue'
 import Calendar from '../pages/calendar.component.vue'
 import Analytics from "@/pages/analytics.component.vue";
 import Team from "@/pages/team.component.vue";
-import todoComponent from "@/components/projects/todo.component.vue";
+import TasksBoard from "@/components/projects/TasksBoard.vue";
 import Login from "@/pages/login/login-content.component.vue";
 import MainLayoutPage from "@/pages/main-layout/main-layout-page.vue";
 import SignUp from "@/pages/signup/signup-content.component.vue";
@@ -30,7 +30,7 @@ const routes = [
             { path: 'home', component: Home,meta: { title: 'Home Page' }},
             { path: 'calendar', component: Calendar,meta: { title: 'Calendar' } },
             { path: 'projects', component: ProjectsComponent, meta: { title: 'Projects' } },
-            { path: 'projects/:id/toDo', name: 'projectTodo', component: todoComponent, props: true, meta: { title: 'Tasks' } },
+            { path: 'projects/:id/toDo', name: 'projectTodo', component: TasksBoard, props: true, meta: { title: 'Tasks' } },
             { path: 'analytics', component: Analytics, meta: { title: 'Analytics' } },
             { path: 'team', component: Team, meta: { title: 'Team' } },
             { path: 'new-post', component: NewPost, meta: { title: 'Post' } },

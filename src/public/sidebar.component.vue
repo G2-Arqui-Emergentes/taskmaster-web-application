@@ -1,6 +1,6 @@
 <script>
-import HomeIcon from '../assets/home-icon.svg';
-import ProjectIcon from '../assets/project-icon.svg';
+import HomeIcon from '../assets/dashboard-icon.svg';
+import ProjectIcon from '../assets/projects-icon.svg';
 import AnalyticsIcon from '../assets/analytics-icon.svg';
 import CalendarIcon from '../assets/calendar-icon.svg';
 import TeamIcon from '../assets/team-icon.svg';
@@ -39,11 +39,10 @@ export default {
     },
     isManager() {
       return this.roleLower === '0' || this.roleLower === 'manager';
-      },
+    },
     hasUser() {
       return !!this.user && Object.keys(this.user).length > 0;
     }
-
   },
   methods: {
     navigateToHome() {
@@ -77,197 +76,319 @@ export default {
 </script>
 
 <template>
-  <transition name="slide">
-    <aside v-show="sidebarVisible">
-      <div class="py-5 pl-3 h-full flex flex-column justify-content-between relative">
-        <ul class="flex flex-column gap-3">
-          <li class="flex flex-row gap-3 align-items-center py-3 pl-4 border-round-md"
-              @click="navigateToHome"
-              :class="{ active: $route.path === '/home' }">
-            <HomeIcon></HomeIcon>
-            <p class="font-medium text-base" v-t="'sidebar.home'">Home</p>
-          </li>
-          <li class="flex flex-row gap-3 align-items-center py-3 pl-4 border-round-md"
-              @click="navigateToProjects"
-              :class="{ active: $route.path === '/projects' }">
-            <ProjectIcon></ProjectIcon>
-            <p class="font-medium text-base" v-t="'sidebar.projects'">Projects</p>
-          </li>
-          <li class="flex flex-row gap-3 align-items-center py-3 pl-4 border-round-md"
-              @click="navigateToAnalytics"
-              :class="{ active: $route.path === '/analytics' }">
-            <AnalyticsIcon></AnalyticsIcon>
-            <p class="font-medium text-base" v-t="'sidebar.analytics'">Analytics</p>
-          </li>
-          <li class="flex flex-row gap-3 align-items-center py-3 pl-4 border-round-md"
-              @click="navigateToCalendar"
-              :class="{ active: $route.path === '/calendar' }">
-            <CalendarIcon></CalendarIcon>
-            <p class="font-medium text-base " v-t="'sidebar.calendar'">Calendar</p>
-          </li>
-          <!-- Create Post: solo para Manager -->
-          <li class="flex flex-row gap-3 align-items-center py-3 pl-4 border-round-md"
-              @click="navigateToCreatePost"
-              :class="{ active: $route.path === '/new-post' }"
-              v-if="isManager">
-            <PostIcon></PostIcon>
-            <p class="font-medium text-base" v-t="'sidebar.createpost'">Create Post</p>
-          </li>
+  <aside>
+    <div class="sidebar-content">
+      <ul class="menu-list">
+        <li class="menu-item"
+            @click="navigateToHome"
+            :class="{ active: $route.path === '/home' }">
+          <HomeIcon class="menu-icon" />
+          <p class="menu-text" v-t="'sidebar.dashboard'">Dashboard</p>
+        </li>
 
-          <li class="flex flex-row gap-3 align-items-center py-3 pl-4 border-round-md"
-              @click="navigateToTeam"
-              :class="{ active: $route.path === '/team' }"
-              v-if="hasUser">
-            <TeamIcon></TeamIcon>
-            <p class="font-medium text-base">Team</p>
-          </li>
-        </ul>
-        <div class="pr-5">
-          <div class="relative flex flex-row border-top-1 border-gray-500 gap-3 align-items-center pt-5 pl-3">
-            <div @click="navigateToLogin()" class="inline-flex cursor-pointer align-items-center" style="gap: 11.5px">
-              <i class="pi pi-sign-out text-gray-700" style="font-size: 1.5rem;"></i>
-              <p class="font-medium text-gray-700" style="margin-bottom: 2px" v-t="'sidebar.logout'">Log out</p>
-            </div>
-            <div class="card flex right-0 justify-center absolute">
-              <pv-dropdown v-model="selectedCountry" :options="countries" optionLabel="name" placeholder="Language"
-                           class="w-full md:w-56 py-0" style="padding-left: 10px"
-                            @change="changeLanguage(selectedCountry.code)">
-                <template #value="slotProps">
-                  <div v-if="slotProps.value" class="flex items-center py-2 gap-2">
-                    <img :alt="slotProps.value.label"
-                         :src="slotProps.value.flag"
-                         :class="`dropdown-image border-1 flag flag-${slotProps.value.code.toLowerCase()}`" style="width: 18px"/>
-                    <div>{{ slotProps.value.name }}</div>
-                  </div>
-                  <span v-else> {{ slotProps.placeholder }}</span>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center py-2 gap-2 pl-2">
-                    <img :alt="slotProps.option.label"
-                         :src="slotProps.option.flag"
-                         :class="`flag flag-${slotProps.option.code.toLowerCase()} dropdown-item-image`"
-                         style="width: 18px"/>
-                    <div>{{ slotProps.option.name }}</div>
-                  </div>
-                </template>
-              </pv-dropdown>
-            </div>
+        <li class="menu-item"
+            @click="navigateToProjects"
+            :class="{ active: $route.path === '/projects' }">
+          <ProjectIcon class="menu-icon" />
+          <p class="menu-text" v-t="'sidebar.projects'">Projects</p>
+        </li>
+
+        <li class="menu-item"
+            @click="navigateToAnalytics"
+            :class="{ active: $route.path === '/analytics' }">
+          <AnalyticsIcon class="menu-icon" />
+          <p class="menu-text" v-t="'sidebar.analytics'">Analytics</p>
+        </li>
+
+        <li class="menu-item"
+            @click="navigateToCalendar"
+            :class="{ active: $route.path === '/calendar' }">
+          <CalendarIcon class="menu-icon" />
+          <p class="menu-text" v-t="'sidebar.calendar'">Calendar</p>
+        </li>
+
+        <li class="menu-item"
+            @click="navigateToCreatePost"
+            :class="{ active: $route.path === '/new-post' }"
+            v-if="isManager">
+          <PostIcon class="menu-icon" />
+          <p class="menu-text" v-t="'sidebar.createpost'">Create Post</p>
+        </li>
+
+        <li class="menu-item"
+            @click="navigateToTeam"
+            :class="{ active: $route.path === '/team' }"
+            v-if="hasUser">
+          <TeamIcon class="menu-icon" />
+          <p class="menu-text">Team</p>
+        </li>
+      </ul>
+
+      <div class="footer-container">
+        <div class="footer-row">
+          <div @click="navigateToLogin()" class="logout-item">
+            <i class="pi pi-sign-out logout-icon"></i>
+            <p class="logout-text" v-t="'sidebar.logout'">Log out</p>
+          </div>
+          <div class="language-item">
+            <pv-dropdown
+                v-model="selectedCountry"
+                :options="countries"
+                optionLabel="name"
+                placeholder="Language"
+                @change="changeLanguage(selectedCountry.code)"
+            >
+              <template #value="slotProps">
+                <div v-if="slotProps.value" class="language-value">
+                  <img :alt="slotProps.value.label"
+                       :src="slotProps.value.flag"
+                       class="language-flag" />
+                  <span>{{ slotProps.value.name }}</span>
+                </div>
+                <span v-else>{{ slotProps.placeholder }}</span>
+              </template>
+              <template #option="slotProps">
+                <div class="language-option">
+                  <img :alt="slotProps.option.label"
+                       :src="slotProps.option.flag"
+                       class="language-flag" />
+                  <span>{{ slotProps.option.name }}</span>
+                </div>
+              </template>
+            </pv-dropdown>
           </div>
         </div>
       </div>
-    </aside>
-  </transition>
+    </div>
+  </aside>
 </template>
 
 <style scoped>
-
-.dropdown-image {
-  height: 19px;
-  width: 20px !important;
-  margin-top: 3px
-}
-
-.dropdown-item-image {
-  margin-top: 3px;
-  height: 18px;
-}
-
 aside {
   --brand-500: #b22222;
   --brand-600: #8f1c1c;
-  border-right: 2px solid #BABABA;
-  background-color: #f8f9fb !important;
+  background-color: #f8f9fb;
+  box-sizing: border-box;
+  height: 100%;
+  overflow-y: auto;
 }
 
-.inline-flex:hover i,
-.inline-flex:hover p {
-  color: var(--brand-600) !important;
-  transition: all 0.3s;
-  transition-timing-function: ease;
+.sidebar-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem 0 1.5rem 0;
 }
 
-li > p {
-  letter-spacing: .5px;
-  color: #6b7280;
-  transition: 0.2s ease;
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 0 0 0 14.5px;
+  list-style: none;
 }
 
-li svg {
-  color: #6b7280;
-  fill: #6b7280;
-  stroke: #6b7280;
-  transition: 0.2s ease;
-}
-
-li {
+.menu-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  width: 300px;
+  height: 52px;
+  padding: 0 1rem;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-left: 4px solid transparent;
-  margin-left: -4px;
 }
 
-.active {
-  background: rgba(255, 77, 77, 0.1);
-  border-left: 4px solid #ff4d4f;
-  font-weight: 600;
+.menu-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  color: #000;
+  fill: currentColor;
+  stroke: currentColor;
 }
 
-.active > p {
-  color: #ff4d4f;
-  font-weight: 600;
+.menu-text {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: #000;
+  margin: 0;
+  transition: color 0.2s ease;
 }
 
-.active svg {
-  color: #ff4d4f;
-  fill: #ff4d4f;
-  stroke: #ff4d4f;
-}
-
-li:not(.active):hover {
+.menu-item:hover {
   background: rgba(0, 0, 0, 0.04);
-  transition: 0.2s ease;
 }
 
-aside {
-  position: fixed;
-  margin-top: 0px;
-  bottom: 0;
-  top: 0;
+.menu-item.active {
+  background: #E11D48;
+}
+
+.menu-item.active .menu-text {
+  color: #fff;
+  font-weight: 600;
+}
+
+.menu-item.active .menu-icon {
+  color: #fff;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.footer-container {
   width: 300px;
-  z-index: 99;
-  background-color: rgba(248, 249, 251, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  margin-left: 14.5px;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
 }
 
-
-.slide-enter {
-  transform: translateX(-120%);
+.footer-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
-.slide-enter-active {
-  transform: translateX(0);
-  transition: transform 0.4s ease-out;
+.logout-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.slide-leave {
-  transform: translateX(0);
+.logout-icon {
+  font-size: 1.25rem;
+  color: #4b5563;
+  transition: color 0.2s ease;
 }
 
-.slide-leave-active {
-  transform: translateX(-120%);
-  transition: transform 0.4s ease-out;
+.logout-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+  margin: 0;
+  transition: color 0.2s ease;
 }
 
+.logout-item:hover .logout-icon,
+.logout-item:hover .logout-text {
+  color: var(--brand-600);
+}
 
-@media (min-width: 1024px) {
-  aside {
-    position: relative;
-    margin-top: 0;
-    height: 100%;
-    width: 350px;
+.language-item {
+  display: flex;
+  align-items: center;
+}
+
+.language-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  padding: 0.5rem 0;
+}
+
+.language-flag {
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+:deep(.p-dropdown) {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-width: 100px;
+}
+
+:deep(.p-dropdown .p-dropdown-label) {
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+:deep(.p-dropdown .p-dropdown-trigger) {
+  width: auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+:deep(.p-dropdown .p-dropdown-trigger .p-dropdown-trigger-icon) {
+  color: #4b5563;
+  font-size: 0.85rem;
+  margin-left: 0.25rem;
+}
+
+:deep(.p-dropdown-panel) {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 4px;
+}
+
+:deep(.p-dropdown-items) {
+  padding: 0.25rem 0;
+}
+
+:deep(.p-dropdown-item) {
+  padding: 0.6rem 1rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+:deep(.p-dropdown-item:hover) {
+  background: #f3f4f6;
+}
+
+:deep(.p-dropdown-item.p-highlight) {
+  background: #fef2f2;
+  color: var(--brand-500);
+}
+
+@media (max-width: 1023px) {
+  .menu-list {
+    padding: 0 0 0 10px;
+    gap: 0.75rem;
+  }
+
+  .menu-item {
+    width: 260px;
+    padding: 0 0.75rem;
+  }
+
+  .menu-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .footer-container {
+    width: 260px;
+    margin-left: 10px;
+  }
+
+  .footer-row {
+    padding: 0 0.75rem;
   }
 }
-
-
 </style>

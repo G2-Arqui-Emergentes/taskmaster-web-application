@@ -1,5 +1,5 @@
 <script>
-import ProfileContent from "@/components/profile/profile-content.component.vue";
+import ProfileContent from "@/components/profile/ProfileContent.vue";
 
 export default {
   name: "profile-page",

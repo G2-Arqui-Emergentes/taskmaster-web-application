@@ -1,14 +1,9 @@
-<script>
-import HomeContent from "@/components/home/home-content.component.vue";
-
-export default {
-  name: "home",
-  components: {HomeContent}
-}
+<script setup>
+import DashboardContent from '@/components/dashboard/DashboardContent.vue'
 </script>
 
 <template>
-  <home-content></home-content>
+  <DashboardContent />
 </template>
 
 <style scoped>

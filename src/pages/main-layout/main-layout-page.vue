@@ -8,38 +8,50 @@ export default {
   components: { Home, Toolbar, Sidebar },
   data() {
     return {
-      sidebarVisible: true,
+      sidebarVisible: false,
+      windowWidth: window.innerWidth
     }
   },
   methods: {
-
     toggleNav() {
-      console.log(this.sidebarVisible);
       this.sidebarVisible = !this.sidebarVisible;
     },
-
     updateSidebarVisible() {
-      this.sidebarVisible = window.innerWidth > 1023;
+      if (window.innerWidth > 1023) {
+        this.sidebarVisible = true;
+      } else {
+        this.sidebarVisible = false;
+      }
+      this.windowWidth = window.innerWidth;
+    },
+    handleResize() {
+      this.updateSidebarVisible();
+    },
+    closeSidebar() {
+      if (this.windowWidth <= 1023) {
+        this.sidebarVisible = false;
+      }
     }
   },
   mounted() {
     this.updateSidebarVisible();
-    window.addEventListener('resize', this.updateSidebarVisible);
+    window.addEventListener('resize', this.handleResize);
   },
   beforeDestroy() {
-    window.removeEventListener('resize', this.updateSidebarVisible);
+    window.removeEventListener('resize', this.handleResize);
   }
 }
 </script>
 
 <template>
   <div class="app-container">
-    <toolbar :toggleNav="toggleNav" class="toolbar w-full"></toolbar>
+    <toolbar :toggleNav="toggleNav" class="toolbar"></toolbar>
     <div class="content-wrapper">
-      <div class="sidebar-container">
+      <div class="mobile-overlay" v-if="windowWidth <= 1023 && sidebarVisible" @click="closeSidebar"></div>
+      <div class="sidebar-container" :class="{ 'sidebar-open': sidebarVisible && windowWidth <= 1023 }">
         <sidebar :sidebarVisible="sidebarVisible" class="sidebar"></sidebar>
       </div>
-      <main class="main-container">
+      <main class="main-container" :class="{ 'main-blur': sidebarVisible && windowWidth <= 1023 }">
         <router-view></router-view>
       </main>
     </div>
@@ -47,64 +59,84 @@ export default {
 </template>
 
 <style scoped>
-
-/*para testing no borrar, estos estilos son gloables*/
-.border {
-  border: 1px solid blue;
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.app-container {
+.toolbar {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 102;
+  background-color: white;
+}
 
-  .content-wrapper {
-    display: flex;
+.content-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
 
-    .sidebar-container {
-      .sidebar {
-        position: fixed;
-        height: calc(100vh - 112px);
-        top: 112px;
-        z-index: 9;
-      }
-      @media (min-width: 1024px) {
-        width: 349px;
-        margin-top: 0;
-      }
-    }
+/* Desktop - sidebar normal */
+@media (min-width: 1024px) {
+  .sidebar-container {
+    width: 329px;
+    flex-shrink: 0;
+    position: relative;
+  }
 
-    .main-container {
-      width: calc(100% - 349px);
-      height: 100%;
-      min-height: calc(100vh - 112px);
-      position: relative;
-    }
-    @media(max-width: 1024px) {
-      .main-container {
-        width: 100%;
-      }
-    }
+  .main-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
   }
 }
 
-/*para el style del scroll owo*/
+/* Móvil/Tablet - sidebar como overlay debajo del toolbar */
+@media (max-width: 1023px) {
+  .sidebar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-out;
+    background-color: #f8f9fb;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    margin-top: 120px;
+  }
 
-::-webkit-scrollbar-track
-{
-  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  border-radius: 10px;
-  background-color: #F5F5F5;
+  .sidebar-container.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .mobile-overlay {
+    position: fixed;
+    top: 120px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+    cursor: pointer;
+  }
+
+  .main-container {
+    width: 100%;
+    overflow-y: auto;
+    padding: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .main-container.main-blur {
+    filter: blur(2px);
+    pointer-events: none;
+  }
 }
-
-::-webkit-scrollbar
-{
-  width: 12px;
-  background-color: #F5F5F5;
-}
-
-::-webkit-scrollbar-thumb
-{
-  border-radius: 10px;
-  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-  background-color: #BABABA;
-}
-
 </style>
