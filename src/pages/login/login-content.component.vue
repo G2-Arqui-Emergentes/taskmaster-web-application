@@ -1,5 +1,6 @@
 <script>
 import { UserService } from "@/services/user.service.js";
+import taskmasterLogo from "@/assets/taskmaster-logo.svg?url";
 
 export default {
   name: "login-content",
@@ -13,6 +14,7 @@ export default {
       isRegistered: false,
       showDialog: false,
       message_error: "",
+      logoUrl: taskmasterLogo
     };
   },
   methods: {
@@ -80,7 +82,7 @@ export default {
 <template>
   <div class="login-container h-screen flex">
     <div class="logo-container flex">
-      <img src="../../assets/taskmaster-logo.svg" alt="logo" style="width: 100px; height: auto; filter: brightness(0) saturate(100%) invert(18%) sepia(98%) saturate(4425%) hue-rotate(348deg) brightness(94%) contrast(98%);" />
+      <img :src="logoUrl" alt="logo" style="width: 100px; height: auto; filter: brightness(0) saturate(100%) invert(18%) sepia(98%) saturate(4425%) hue-rotate(348deg) brightness(94%) contrast(98%);" />
       <span class="font-bold text-3xl">TaskMaster</span>
     </div>
 
