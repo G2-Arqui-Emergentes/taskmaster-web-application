@@ -1,29 +1,52 @@
-# aidmanager-frontend
+# TaskMaster Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Frontend de TaskMaster, una aplicación web para la gestión y organización de tareas desarrollada con Vue 3 y Vite.
 
-## Recommended IDE Setup
+## Tecnologías
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Vue 3
+- Vite
+- Vue Router
+- JavaScript
 
-## Customize configuration
+## Instalación
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
+Instalar dependencias:
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+## Desarrollo
+
+Ejecutar el servidor local:
 
 ```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
+## Producción
+
+Generar la versión optimizada:
 
 ```sh
 npm run build
 ```
+
+## Vista previa
+
+Visualizar la build de producción:
+
+```sh
+npm run preview
+```
+
+## Funcionalidades
+
+- Gestión de proyectos.
+- Creación, edición y seguimiento de tareas.
+- Dashboards para visualización de información.
+- Analíticas y métricas de productividad.
+- Interfaz responsive para dispositivos móviles y escritorio.
+- Integración con API backend para persistencia de datos.
+- Generación de insights mediante inteligencia artificial.
