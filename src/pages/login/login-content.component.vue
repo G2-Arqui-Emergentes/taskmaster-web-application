@@ -1,6 +1,7 @@
 <script>
 import { UserService } from "@/services/user.service.js";
 import taskmasterLogo from "@/assets/taskmaster-logo.svg?url";
+import loginImage from "@/assets/login.png";
 
 export default {
   name: "login-content",
@@ -15,7 +16,7 @@ export default {
       showDialog: false,
       message_error: "",
       logoUrl: taskmasterLogo,
-      leftImageUrl: "src/assets/login.png"
+      leftImageUrl: loginImage
     };
   },
   methods: {
