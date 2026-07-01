@@ -13,17 +13,18 @@ const hasData = computed(() => {
 })
 
 const chartData = computed(() => {
+  const isDark = document.documentElement.dataset.theme === 'dark'
   return {
     labels: props.timelineData.labels,
     datasets: [{
       label: 'Tasks Completed',
       data: props.timelineData.data,
       fill: true,
-      backgroundColor: 'rgba(178, 34, 34, 0.1)',
-      borderColor: '#b22222',
+      backgroundColor: isDark ? 'rgba(255, 79, 130, 0.14)' : 'rgba(178, 34, 34, 0.1)',
+      borderColor: isDark ? '#ff4f82' : '#b22222',
       tension: 0.4,
-      pointBackgroundColor: '#b22222',
-      pointBorderColor: '#fff',
+      pointBackgroundColor: isDark ? '#ff4f82' : '#b22222',
+      pointBorderColor: isDark ? '#10141d' : '#fff',
       pointRadius: 4,
       pointHoverRadius: 6,
       stepped: false
@@ -32,10 +33,11 @@ const chartData = computed(() => {
 })
 
 const chartOptions = computed(() => {
+  const isDark = document.documentElement.dataset.theme === 'dark'
   const documentStyle = getComputedStyle(document.documentElement)
-  const textColor = documentStyle.getPropertyValue('--text-color') || '#4b5563'
-  const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary') || '#6b7280'
-  const surfaceBorder = documentStyle.getPropertyValue('--surface-border') || '#e5e7eb'
+  const textColor = isDark ? '#eef2f8' : (documentStyle.getPropertyValue('--text-color') || '#4b5563')
+  const textColorSecondary = isDark ? '#a7b0bf' : (documentStyle.getPropertyValue('--text-color-secondary') || '#6b7280')
+  const surfaceBorder = isDark ? '#252b38' : (documentStyle.getPropertyValue('--surface-border') || '#e5e7eb')
 
   return {
     maintainAspectRatio: false,

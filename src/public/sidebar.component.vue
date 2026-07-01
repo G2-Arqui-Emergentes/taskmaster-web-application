@@ -19,6 +19,7 @@ export default {
   },
   data() {
     return {
+      currentTheme: document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light',
       selectedCountry: {name: 'English', code: 'en', flag: 'https://m.media-amazon.com/images/S/aplus-seller-content-images-us-east-1/ATVPDKIKX0DER/A2CS421R6PZ7VX/62606ba4-5d5c-4b79-b31c-1de7719d6bf5._CR574,184,1266,1266_PT0_SX300__.jpg'},
       countries: [
         {name: 'Spanish', code: 'es', flag: 'https://ih1.redbubble.net/image.3267488605.3818/raf,360x360,075,t,fafafa:ca443f4786.jpg'},
@@ -42,9 +43,22 @@ export default {
     },
     hasUser() {
       return !!this.user && Object.keys(this.user).length > 0;
+    },
+    isDarkTheme() {
+      return this.currentTheme === 'dark';
     }
   },
   methods: {
+    resolveThemePreference() {
+      const preference = localStorage.getItem('theme') || 'light';
+      if (preference === 'system') {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      return preference;
+    },
+    syncTheme(event) {
+      this.currentTheme = event?.detail?.theme || document.documentElement.dataset.theme || this.resolveThemePreference();
+    },
     navigateToHome() {
       this.$router.push('/home');
     },
@@ -60,6 +74,9 @@ export default {
     navigateToTeam() {
       this.$router.push('/team');
     },
+    navigateToNotifications() {
+      this.$router.push('/notifications');
+    },
     navigateToLogin() {
       this.$store.commit('removeUser');
       this.$store.commit('removeToken');
@@ -71,12 +88,21 @@ export default {
     changeLanguage(lang) {
       this.$i18n.locale = lang;
     }
+  },
+  mounted() {
+    this.currentTheme = document.documentElement.dataset.theme || this.resolveThemePreference();
+    window.addEventListener('theme-changed', this.syncTheme);
+    window.addEventListener('storage', this.syncTheme);
+  },
+  beforeUnmount() {
+    window.removeEventListener('theme-changed', this.syncTheme);
+    window.removeEventListener('storage', this.syncTheme);
   }
 }
 </script>
 
 <template>
-  <aside>
+  <aside :class="{ 'dark-sidebar': isDarkTheme }">
     <div class="sidebar-content">
       <ul class="menu-list">
         <li class="menu-item"
@@ -121,6 +147,14 @@ export default {
             v-if="hasUser">
           <TeamIcon class="menu-icon" />
           <p class="menu-text">Team</p>
+        </li>
+
+        <li class="menu-item"
+            @click="navigateToNotifications"
+            :class="{ active: $route.path === '/notifications' }"
+            v-if="hasUser">
+          <i class="pi pi-bell menu-icon"></i>
+          <p class="menu-text">Notifications</p>
         </li>
       </ul>
 
@@ -167,7 +201,14 @@ export default {
 aside {
   --brand-500: #b22222;
   --brand-600: #8f1c1c;
-  background-color: #f8f9fb;
+  --sidebar-bg: #f8f9fb;
+  --sidebar-text: #000;
+  --sidebar-muted: #4b5563;
+  --sidebar-hover: rgba(0, 0, 0, 0.04);
+  --sidebar-active-bg: #E11D48;
+  --sidebar-active-text: #fff;
+  --sidebar-border: #e5e7eb;
+  background-color: var(--sidebar-bg);
   box-sizing: border-box;
   height: 100%;
   overflow-y: auto;
@@ -207,35 +248,43 @@ aside {
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  color: #000;
+  color: var(--sidebar-text);
   fill: currentColor;
   stroke: currentColor;
+  transition: color 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+}
+
+i.menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
 }
 
 .menu-text {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.5px;
-  color: #000;
+  color: var(--sidebar-text);
   margin: 0;
   transition: color 0.2s ease;
 }
 
 .menu-item:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--sidebar-hover);
 }
 
 .menu-item.active {
-  background: #E11D48;
+  background: var(--sidebar-active-bg);
 }
 
 .menu-item.active .menu-text {
-  color: #fff;
+  color: var(--sidebar-active-text);
   font-weight: 600;
 }
 
 .menu-item.active .menu-icon {
-  color: #fff;
+  color: var(--sidebar-active-text);
   fill: currentColor;
   stroke: currentColor;
 }
@@ -244,7 +293,7 @@ aside {
   width: 300px;
   margin-left: 14.5px;
   padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--sidebar-border);
 }
 
 .footer-row {
@@ -267,14 +316,14 @@ aside {
 
 .logout-icon {
   font-size: 1.25rem;
-  color: #4b5563;
+  color: var(--sidebar-muted);
   transition: color 0.2s ease;
 }
 
 .logout-text {
   font-size: 14px;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--sidebar-muted);
   margin: 0;
   transition: color 0.2s ease;
 }
@@ -295,7 +344,7 @@ aside {
   gap: 0.5rem;
   font-size: 14px;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--sidebar-muted);
 }
 
 .language-option {
@@ -324,7 +373,7 @@ aside {
   padding: 0.5rem 0.5rem 0.5rem 0;
   font-size: 14px;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--sidebar-muted);
 }
 
 :deep(.p-dropdown .p-dropdown-trigger) {
@@ -334,7 +383,7 @@ aside {
 }
 
 :deep(.p-dropdown .p-dropdown-trigger .p-dropdown-trigger-icon) {
-  color: #4b5563;
+  color: var(--sidebar-muted);
   font-size: 0.85rem;
   margin-left: 0.25rem;
 }
@@ -364,6 +413,61 @@ aside {
 :deep(.p-dropdown-item.p-highlight) {
   background: #fef2f2;
   color: var(--brand-500);
+}
+
+aside.dark-sidebar {
+  --brand-500: #f43f73;
+  --brand-600: #fb7185;
+  --sidebar-bg: #080b12;
+  --sidebar-text: #d8dee9;
+  --sidebar-muted: #9aa3b2;
+  --sidebar-hover: rgba(244, 63, 115, 0.08);
+  --sidebar-active-bg: rgba(225, 29, 72, 0.28);
+  --sidebar-active-text: #ff4f82;
+  --sidebar-border: #1f2430;
+  background: var(--sidebar-bg);
+  border-right: 1px solid #151a24;
+}
+
+aside.dark-sidebar .sidebar-content {
+  background: transparent;
+}
+
+aside.dark-sidebar .menu-item {
+  color: var(--sidebar-text);
+}
+
+aside.dark-sidebar .menu-item.active {
+  border: 1px solid rgba(244, 63, 115, 0.28);
+  box-shadow: inset 0 0 24px rgba(225, 29, 72, 0.16), 0 10px 28px rgba(225, 29, 72, 0.08);
+}
+
+aside.dark-sidebar .menu-item.active .menu-text {
+  text-shadow: 0 0 10px rgba(244, 63, 115, 0.18);
+}
+
+aside.dark-sidebar .logout-item:hover .logout-icon,
+aside.dark-sidebar .logout-item:hover .logout-text {
+  color: var(--brand-600);
+}
+
+aside.dark-sidebar :deep(.p-dropdown-panel) {
+  background: #10141d;
+  border: 1px solid #242a36;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.38);
+}
+
+aside.dark-sidebar :deep(.p-dropdown-item) {
+  color: #d8dee9;
+}
+
+aside.dark-sidebar :deep(.p-dropdown-item:hover) {
+  background: rgba(244, 63, 115, 0.08);
+}
+
+aside.dark-sidebar :deep(.p-dropdown-item.p-highlight) {
+  background: rgba(225, 29, 72, 0.18);
+  color: #ff4f82;
 }
 
 @media (max-width: 1023px) {

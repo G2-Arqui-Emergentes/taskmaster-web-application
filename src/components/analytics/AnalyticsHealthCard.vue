@@ -26,32 +26,40 @@ const taskStatusCounts = computed(() => {
 })
 
 const chartData = computed(() => {
+  const isDark = document.documentElement.dataset.theme === 'dark'
   return {
     labels: ['To-Do', 'In Progress', 'Done'],
     datasets: [{
       data: [taskStatusCounts.value.todo, taskStatusCounts.value.inProgress, taskStatusCounts.value.done],
-      backgroundColor: ['#fecaca', '#fed7aa', '#dcfce7'],
-      hoverBackgroundColor: ['#fca5a5', '#fdba74', '#bbf7d0']
+      backgroundColor: isDark ? ['#ff6f99', '#f59e0b', '#34d399'] : ['#fecaca', '#fed7aa', '#dcfce7'],
+      hoverBackgroundColor: isDark ? ['#ff8cae', '#fbbf24', '#6ee7b7'] : ['#fca5a5', '#fdba74', '#bbf7d0'],
+      borderColor: isDark ? '#10141d' : '#ffffff'
     }]
   }
 })
 
-const chartOptions = computed(() => ({
-  cutout: '60%',
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: 'bottom',
-      labels: { font: { size: 11 } }
-    },
-    tooltip: {
-      callbacks: {
-        label: (context) => `${context.label}: ${context.parsed}%`
+const chartOptions = computed(() => {
+  const isDark = document.documentElement.dataset.theme === 'dark'
+  return {
+    cutout: '60%',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          font: { size: 11 },
+          color: isDark ? '#a7b0bf' : '#4b5563'
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => `${context.label}: ${context.parsed}%`
+        }
       }
     }
   }
-}))
+})
 </script>
 
 <template>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import AnalyticsDropdown from './AnalyticsDropdown.vue'
 import AnalyticsWorkloadCard from './AnalyticsWorkloadCard.vue'
 import AnalyticsHealthCard from './AnalyticsHealthCard.vue'
@@ -13,6 +13,8 @@ import { UserService } from '@/services/user.service.js'
 const selectedProjectId = ref(null)
 const hasProjects = ref(true)
 const activeModal = ref(null)
+const currentTheme = ref(document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light')
+const isDarkTheme = computed(() => currentTheme.value === 'dark')
 
 const projectData = ref(null)
 const allTasks = ref([])
@@ -284,10 +286,33 @@ const openModal = (modalName) => {
 const closeModal = () => {
   activeModal.value = null
 }
+
+const resolveThemePreference = () => {
+  const preference = localStorage.getItem('theme') || 'light'
+  if (preference === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return preference
+}
+
+const syncTheme = (event) => {
+  currentTheme.value = event?.detail?.theme || document.documentElement.dataset.theme || resolveThemePreference()
+}
+
+onMounted(() => {
+  currentTheme.value = document.documentElement.dataset.theme || resolveThemePreference()
+  window.addEventListener('theme-changed', syncTheme)
+  window.addEventListener('storage', syncTheme)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('theme-changed', syncTheme)
+  window.removeEventListener('storage', syncTheme)
+})
 </script>
 
 <template>
-  <section class="h-full p-4 lg:p-5 w-full relative" style="min-height: 100%">
+  <section class="analytics-page h-full p-4 lg:p-5 w-full relative" :class="{ 'dark-analytics': isDarkTheme }" style="min-height: 100%">
     <div class="flex flex-row justify-content-between flex-wrap gap-0">
       <div class="flex flex-column gap-4" style="width: unset">
         <h2 class="title-analytics text-4xl">Analytics</h2>
@@ -296,8 +321,7 @@ const closeModal = () => {
             @project-selected="handleProjectSelected"
         />
       </div>
-      <div class="align-self-center border-1 flex align-items-center flex-row border-round-2xl text-white mb-2"
-           style="width: unset; background-color: #b22222; padding: 15px 20px; gap: 10px">
+      <div class="insights-badge align-self-center border-1 flex align-items-center flex-row border-round-2xl text-white mb-2">
         <p class="w-max">Project Insights</p>
         <i class="text-lg pi pi-chart-line"></i>
       </div>
@@ -394,6 +418,20 @@ const closeModal = () => {
 </template>
 
 <style scoped>
+.analytics-page {
+  background: #ffffff;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.insights-badge {
+  width: unset !important;
+  flex: 0 0 auto;
+  margin-left: auto;
+  background-color: #b22222;
+  padding: 15px 20px;
+  gap: 10px;
+}
+
 .card:hover {
   background-color: #F5F5F5;
 }
@@ -544,5 +582,124 @@ const closeModal = () => {
   padding-left: 30px;
   padding-top: 20px;
   padding-bottom: 10px;
+}
+
+.analytics-page.dark-analytics {
+  --text-color: #eef2f8;
+  --text-color-secondary: #a7b0bf;
+  --surface-border: #252b38;
+  background: #080b12;
+  color: #eef2f8;
+}
+
+.dark-analytics .title-analytics {
+  color: #ff4f82;
+}
+
+.dark-analytics .insights-badge {
+  background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+  border-color: rgba(244, 63, 115, 0.32) !important;
+  box-shadow: 0 12px 28px rgba(225, 29, 72, 0.18);
+}
+
+.dark-analytics :deep(.p-card) {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border: 1px solid rgba(244, 63, 115, 0.24);
+  border-radius: 14px;
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-analytics :deep(.p-card:hover) {
+  background: linear-gradient(145deg, rgba(22, 27, 38, 0.98), rgba(12, 16, 25, 0.98));
+  border-color: rgba(244, 63, 115, 0.34);
+}
+
+.dark-analytics .card:hover,
+.dark-analytics :deep(.card:hover),
+.dark-analytics :deep(.p-card.card:hover) {
+  background: linear-gradient(145deg, rgba(22, 27, 38, 0.98), rgba(12, 16, 25, 0.98)) !important;
+}
+
+.dark-analytics :deep(.p-card .p-card-body),
+.dark-analytics :deep(.p-card .p-card-content),
+.dark-analytics :deep(.p-card .p-card-header) {
+  background: transparent;
+  color: #eef2f8;
+}
+
+.dark-analytics :deep(.p-card .card) {
+  background: transparent !important;
+}
+
+.dark-analytics .text,
+.dark-analytics :deep(.p-card p),
+.dark-analytics .budget-value {
+  color: #f8fafc;
+}
+
+.dark-analytics .budget-label,
+.dark-analytics .progress-text {
+  color: #a7b0bf;
+}
+
+.dark-analytics .budget-value {
+  color: #ff4f82;
+}
+
+.dark-analytics .progress-bar {
+  background-color: #252b38;
+}
+
+.dark-analytics .progress-fill {
+  background-color: #ff4f82;
+}
+
+.dark-analytics .status-badge.planned,
+.dark-analytics .status-badge.in_progress {
+  background: rgba(225, 29, 72, 0.14);
+  color: #ff8cae;
+}
+
+.dark-analytics .status-badge.completed {
+  background: rgba(16, 185, 129, 0.14);
+  color: #6ee7b7;
+}
+
+.dark-analytics .status-badge.cancelled {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+}
+
+.dark-analytics :deep(.p-dropdown) {
+  background: #10141d;
+  border: 1px solid #242a36;
+  color: #eef2f8;
+  border-radius: 10px;
+}
+
+.dark-analytics :deep(.p-dropdown-label),
+.dark-analytics :deep(.p-dropdown-trigger) {
+  color: #eef2f8;
+}
+
+.dark-analytics :deep(.p-dropdown-panel) {
+  background: #10141d;
+  border: 1px solid #242a36;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.38);
+}
+
+.dark-analytics :deep(.p-dropdown-item) {
+  color: #d8dee9;
+}
+
+.dark-analytics :deep(.p-dropdown-item:hover),
+.dark-analytics :deep(.p-dropdown-item.p-highlight) {
+  background: rgba(225, 29, 72, 0.16);
+  color: #ff8cae;
+}
+
+.dark-analytics :deep(.text-gray-500) {
+  color: #a7b0bf !important;
 }
 </style>

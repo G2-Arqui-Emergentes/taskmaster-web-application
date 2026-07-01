@@ -1,5 +1,4 @@
 <script setup>
-import Button from "primevue/button";
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import router from "@/router/index.js";
 import { useStore } from 'vuex';
@@ -60,13 +59,13 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 <template>
   <div class="project-card">
     <div class="card-header">
-      <Button class="img-but" @click="openTodo">
+      <button type="button" class="img-but" @click="openTodo">
         <img
             :src="project.imageUrl || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'"
             alt="Project Image"
             class="project-image"
         />
-      </Button>
+      </button>
       <div v-if="isLeader" class="menu-container" ref="menuContainer">
         <button class="menu-btn" @click="toggleMenu" aria-label="Project options">
           <i class="pi pi-ellipsis-h"></i>
@@ -116,11 +115,18 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   border-radius: 14px;
+  display: block;
+  cursor: pointer;
 }
 
 .img-but:hover {
   cursor: pointer;
-  transform: scale(1.05);
+  transform: translateY(-2px);
+}
+
+.img-but:focus,
+.img-but:focus-visible {
+  outline: none;
 }
 
 .menu-container {
@@ -185,6 +191,62 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
   text-align: left;
   margin-top: 0.5rem;
   flex-grow: 1;
+}
+
+:global(.dark-projects) .project-card {
+  color: #eef2f8;
+}
+
+:global(.dark-projects) .img-but {
+  background: #10141d !important;
+  border: 1px solid rgba(244, 63, 115, 0.24) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+:global(.dark-projects) .project-card img {
+  border: 1px solid rgba(244, 63, 115, 0.24);
+  filter: brightness(0.82) saturate(1.08);
+}
+
+:global(.dark-projects) .project-name {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+:global(.dark-projects) .menu-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(8, 11, 18, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+:global(.dark-projects) .menu-btn i {
+  color: #eef2f8;
+}
+
+:global(.dark-projects) .dropdown-menu {
+  background: #10141d;
+  border-color: #242a36;
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.38);
+}
+
+:global(.dark-projects) .dropdown-item {
+  color: #d8dee9;
+}
+
+:global(.dark-projects) .dropdown-item:hover {
+  background: rgba(244, 63, 115, 0.08);
+}
+
+:global(.dark-projects) .dropdown-item.delete {
+  color: #ff6f99;
+  border-top-color: #242a36;
+}
+
+:global(.dark-projects) .dropdown-item.delete:hover {
+  background: rgba(225, 29, 72, 0.14);
 }
 
 @media (max-width: 768px) {

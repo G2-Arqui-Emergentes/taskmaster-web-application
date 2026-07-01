@@ -26,7 +26,7 @@ export default {
         push: false,
         desktop: true
       },
-      selectedTheme: 'light',
+      selectedTheme: localStorage.getItem('theme') || 'light',
       passwordLastUpdated: '4 months ago',
       refreshKey: 0
     };
@@ -114,7 +114,40 @@ export default {
     async changePassword() {
       this.$toast.add({ severity: 'info', summary: 'Coming Soon', detail: 'Password change feature will be available soon', life: 3000 });
       this.showPasswordModal = false;
+    },
+    selectTheme(theme) {
+      this.selectedTheme = theme;
+      localStorage.setItem('theme', theme);
+      this.applyTheme();
+    },
+    applyTheme() {
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const resolvedTheme = this.selectedTheme === 'system'
+          ? (systemPrefersDark ? 'dark' : 'light')
+          : this.selectedTheme;
+
+      document.documentElement.dataset.theme = resolvedTheme;
+      document.documentElement.dataset.themePreference = this.selectedTheme;
+      window.dispatchEvent(new CustomEvent('theme-changed', {
+        detail: {
+          theme: resolvedTheme,
+          preference: this.selectedTheme
+        }
+      }));
+    },
+    handleSystemThemeChange() {
+      if (this.selectedTheme === 'system') {
+        this.applyTheme();
+      }
     }
+  },
+  mounted() {
+    this.applyTheme();
+    this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    this.systemThemeQuery.addEventListener('change', this.handleSystemThemeChange);
+  },
+  beforeUnmount() {
+    this.systemThemeQuery?.removeEventListener('change', this.handleSystemThemeChange);
   }
 };
 </script>
@@ -250,21 +283,21 @@ export default {
             </div>
 
             <div class="appearance-wrapper">
-              <div class="theme-option" :class="{ active: selectedTheme === 'light' }" @click="selectedTheme = 'light'">
+              <div class="theme-option" :class="{ active: selectedTheme === 'light' }" @click="selectTheme('light')">
                 <div class="theme-left">
                   <i class="pi pi-sun"></i>
                   <span>Light Mode</span>
                 </div>
                 <i v-if="selectedTheme === 'light'" class="pi pi-check-circle theme-check"></i>
               </div>
-              <div class="theme-option" :class="{ active: selectedTheme === 'dark' }" @click="selectedTheme = 'dark'">
+              <div class="theme-option" :class="{ active: selectedTheme === 'dark' }" @click="selectTheme('dark')">
                 <div class="theme-left">
                   <i class="pi pi-moon"></i>
                   <span>Dark Mode</span>
                 </div>
                 <i v-if="selectedTheme === 'dark'" class="pi pi-check-circle theme-check"></i>
               </div>
-              <div class="theme-option" :class="{ active: selectedTheme === 'system' }" @click="selectedTheme = 'system'">
+              <div class="theme-option" :class="{ active: selectedTheme === 'system' }" @click="selectTheme('system')">
                 <div class="theme-left">
                   <i class="pi pi-desktop"></i>
                   <span>System Default</span>
@@ -682,12 +715,12 @@ input:checked + .toggle-slider:before {
 }
 
 .profile-card::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--scrollbar-track);
   border-radius: 4px;
 }
 
 .profile-card::-webkit-scrollbar-thumb {
-  background: #E5BDBE;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 

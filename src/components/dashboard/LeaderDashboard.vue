@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { getProjectsByLeader } from '@/services/project.service.js'
 import { getTasksByProjectId } from '@/services/task.service.js'
@@ -12,6 +12,8 @@ const userService = new UserService()
 
 const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 const leaderName = computed(() => currentUser.value?.name || 'Leader')
+const currentTheme = ref(document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light')
+const isDarkTheme = computed(() => currentTheme.value === 'dark')
 const projects = ref([])
 const allTasks = ref([])
 
@@ -148,15 +150,35 @@ const goToTeam = () => {
   router.push({ name: 'team' })
 }
 
+const resolveThemePreference = () => {
+  const preference = localStorage.getItem('theme') || 'light'
+  if (preference === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return preference
+}
+
+const syncTheme = (event) => {
+  currentTheme.value = event?.detail?.theme || document.documentElement.dataset.theme || resolveThemePreference()
+}
+
 onMounted(async () => {
+  currentTheme.value = document.documentElement.dataset.theme || resolveThemePreference()
+  window.addEventListener('theme-changed', syncTheme)
+  window.addEventListener('storage', syncTheme)
   await loadProjects()
   await loadAllTasks()
   await loadNotifications()
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('theme-changed', syncTheme)
+  window.removeEventListener('storage', syncTheme)
+})
 </script>
 
 <template>
-  <div class="leader-dashboard">
+  <div class="leader-dashboard" :class="{ 'dark-dashboard': isDarkTheme }">
     <div class="page-header">
       <h1 class="page-title">Welcome back, {{ leaderName }}!</h1>
       <p class="page-subtitle">AI-powered overview of your team's performance, risks and progress.</p>
@@ -920,5 +942,87 @@ onMounted(async () => {
     width: 100%;
     justify-content: center;
   }
+}
+
+.leader-dashboard.dark-dashboard {
+  background: #080b12;
+  color: #eef2f8;
+}
+
+.dark-dashboard .page-title,
+.dark-dashboard .analytics-title,
+.dark-dashboard .card-title,
+.dark-dashboard .kpi-value,
+.dark-dashboard .recommendation-title,
+.dark-dashboard .performance-header h3,
+.dark-dashboard .activities-header h3,
+.dark-dashboard .team-header h3,
+.dark-dashboard .member-name,
+.dark-dashboard .member-details .member-name,
+.dark-dashboard .activity-text {
+  color: #f8fafc;
+}
+
+.dark-dashboard .page-subtitle,
+.dark-dashboard .kpi-label,
+.dark-dashboard .kpi-suffix,
+.dark-dashboard .card-description,
+.dark-dashboard .recommendation-text,
+.dark-dashboard .performance-sub,
+.dark-dashboard .member-role,
+.dark-dashboard .member-details .member-role,
+.dark-dashboard .activity-time,
+.dark-dashboard .metric-label {
+  color: #a7b0bf;
+}
+
+.dark-dashboard .kpi-card,
+.dark-dashboard .section-card {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border-color: rgba(244, 63, 115, 0.26);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-dashboard .kpi-card {
+  border-left-color: #ff4f82;
+}
+
+.dark-dashboard .section-card:hover,
+.dark-dashboard .kpi-card:hover {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+}
+
+.dark-dashboard .member-row {
+  background: rgba(15, 20, 30, 0.92);
+}
+
+.dark-dashboard .member-row:hover {
+  background: rgba(24, 30, 42, 0.98);
+}
+
+.dark-dashboard .progress-bar {
+  background: #252b38;
+}
+
+.dark-dashboard .ai-recommendation {
+  background: rgba(225, 29, 72, 0.12);
+  border: 1px solid rgba(244, 63, 115, 0.18);
+}
+
+.dark-dashboard .generate-report-btn {
+  background: rgba(59, 130, 246, 0.16);
+  color: #dbeafe;
+}
+
+.dark-dashboard .generate-report-btn:hover {
+  background: rgba(59, 130, 246, 0.24);
+}
+
+.dark-dashboard .online-indicator {
+  border-color: #10141d;
+}
+
+.dark-dashboard .message-icon-btn:hover {
+  background: rgba(225, 29, 72, 0.14);
 }
 </style>

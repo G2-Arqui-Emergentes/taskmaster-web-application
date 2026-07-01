@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { getProjectsByMember } from '@/services/project.service.js'
 import { getTasksByUserId } from '@/services/task.service.js'
@@ -8,6 +8,8 @@ const router = useRouter()
 
 const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 const userName = computed(() => currentUser.value?.name || 'Member')
+const currentTheme = ref(document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light')
+const isDarkTheme = computed(() => currentTheme.value === 'dark')
 
 const myTasks = ref([])
 const myProjects = ref([])
@@ -220,14 +222,34 @@ const goToCalendar = () => {
   router.push({ name: 'calendar' })
 }
 
+const resolveThemePreference = () => {
+  const preference = localStorage.getItem('theme') || 'light'
+  if (preference === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return preference
+}
+
+const syncTheme = (event) => {
+  currentTheme.value = event?.detail?.theme || document.documentElement.dataset.theme || resolveThemePreference()
+}
+
 onMounted(() => {
+  currentTheme.value = document.documentElement.dataset.theme || resolveThemePreference()
+  window.addEventListener('theme-changed', syncTheme)
+  window.addEventListener('storage', syncTheme)
   loadUserProjects()
   loadUserTasks()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('theme-changed', syncTheme)
+  window.removeEventListener('storage', syncTheme)
 })
 </script>
 
 <template>
-  <div class="member-dashboard">
+  <div class="member-dashboard" :class="{ 'dark-dashboard': isDarkTheme }">
     <div class="dashboard-grid">
       <div class="left-column">
         <div class="welcome-card">
@@ -924,6 +946,132 @@ onMounted(() => {
   .deadline-time {
     margin-left: 0;
   }
+}
+
+.member-dashboard.dark-dashboard {
+  background: #080b12;
+  color: #eef2f8;
+}
+
+.dark-dashboard .welcome-card,
+.dark-dashboard .ai-summary-card,
+.dark-dashboard .deadlines-card,
+.dark-dashboard .project-card {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border-color: rgba(244, 63, 115, 0.28);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-dashboard .welcome-title,
+.dark-dashboard .section-title,
+.dark-dashboard .ai-title,
+.dark-dashboard .deadlines-header h3,
+.dark-dashboard .project-name,
+.dark-dashboard .task-title,
+.dark-dashboard .big-number,
+.dark-dashboard .progress-percent,
+.dark-dashboard .metric-number.dark {
+  color: #f8fafc;
+}
+
+.dark-dashboard .welcome-subtitle,
+.dark-dashboard .metric-label,
+.dark-dashboard .velocity-label,
+.dark-dashboard .suggestions-title,
+.dark-dashboard .task-description,
+.dark-dashboard .project-description,
+.dark-dashboard .progress-label,
+.dark-dashboard .small-number,
+.dark-dashboard .suggestion-item span {
+  color: #a7b0bf;
+}
+
+.dark-dashboard .metric-number.red,
+.dark-dashboard .last-updated,
+.dark-dashboard .view-all-btn,
+.dark-dashboard .progress-value {
+  color: #ff4f82;
+}
+
+.dark-dashboard .metric-divider,
+.dark-dashboard .ai-divider {
+  background: #252b38;
+}
+
+.dark-dashboard .progress-ring-container circle:first-child {
+  stroke: #303746;
+}
+
+.dark-dashboard .progress-ring-container circle:nth-child(2) {
+  stroke: #ff3f7a;
+}
+
+.dark-dashboard .ai-header {
+  background: linear-gradient(
+      90deg,
+      rgba(16, 20, 29, 0.98) 0%,
+      rgba(65, 22, 39, 0.96) 50%,
+      rgba(16, 20, 29, 0.98) 100%
+  );
+  border-bottom: 1px solid rgba(244, 63, 115, 0.18);
+}
+
+.dark-dashboard .delay-warning {
+  background: rgba(225, 29, 72, 0.12);
+  border: 1px solid rgba(244, 63, 115, 0.18);
+}
+
+.dark-dashboard .delay-warning span {
+  color: #ff8cae;
+}
+
+.dark-dashboard .deadline-item {
+  background: rgba(15, 20, 30, 0.92);
+  border-color: #242a36;
+}
+
+.dark-dashboard .deadline-item:hover,
+.dark-dashboard .project-card:hover {
+  border-color: rgba(244, 63, 115, 0.36);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+}
+
+.dark-dashboard .tag-urgent,
+.dark-dashboard .tag-high {
+  background: rgba(225, 29, 72, 0.16);
+  color: #ff6f99;
+}
+
+.dark-dashboard .tag-normal {
+  background: #1b2230;
+  color: #a7b0bf;
+}
+
+.dark-dashboard .tag-medium {
+  background: rgba(59, 130, 246, 0.16);
+  color: #79a9ff;
+}
+
+.dark-dashboard .tag-low,
+.dark-dashboard .badge-completed {
+  background: rgba(16, 185, 129, 0.14);
+  color: #6ee7b7;
+}
+
+.dark-dashboard .badge-progress,
+.dark-dashboard .badge-planning {
+  background: rgba(225, 29, 72, 0.14);
+  color: #ff8cae;
+}
+
+.dark-dashboard .member-avatar-small,
+.dark-dashboard .extra-members {
+  border-color: #10141d;
+}
+
+.dark-dashboard .extra-members {
+  background: rgba(244, 63, 115, 0.14);
+  color: #ff8cae;
 }
 
 </style>

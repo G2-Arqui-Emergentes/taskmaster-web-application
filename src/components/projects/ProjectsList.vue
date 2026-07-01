@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import Button from 'primevue/button';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Paginator from 'primevue/paginator';
 import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
@@ -19,6 +18,8 @@ const editProjectData = ref(null);
 const deleteProjectData = ref(null);
 const activeMenuId = ref(null);
 const currentUser = ref(JSON.parse(localStorage.getItem('user') || 'null'));
+const currentTheme = ref(document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light');
+const isDarkTheme = computed(() => currentTheme.value === 'dark');
 
 const isLeader = computed(() => {
   const u = currentUser.value || {};
@@ -93,11 +94,33 @@ const handleDeleteProject = (project) => {
 };
 const handleProjectDeleted = () => { loadProjectsByRole(); };
 
-onMounted(() => { loadProjectsByRole(); });
+const resolveThemePreference = () => {
+  const preference = localStorage.getItem('theme') || 'light';
+  if (preference === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return preference;
+};
+
+const syncTheme = (event) => {
+  currentTheme.value = event?.detail?.theme || document.documentElement.dataset.theme || resolveThemePreference();
+};
+
+onMounted(() => {
+  currentTheme.value = document.documentElement.dataset.theme || resolveThemePreference();
+  window.addEventListener('theme-changed', syncTheme);
+  window.addEventListener('storage', syncTheme);
+  loadProjectsByRole();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('theme-changed', syncTheme);
+  window.removeEventListener('storage', syncTheme);
+});
 </script>
 
 <template>
-  <div class="projects-page">
+  <div class="projects-page" :class="{ 'dark-projects': isDarkTheme }">
     <div class="projects-header">
       <h1 class="title-projects">Projects</h1>
       <div class="projects-actions">
@@ -112,15 +135,16 @@ onMounted(() => { loadProjectsByRole(); });
                   placeholder="Enter project code"
               />
             </div>
-            <Button
-                :loading="joining"
+            <button
+                type="button"
+                :disabled="joining"
                 @click="joinProject"
                 class="join-button"
                 :class="{ 'join-button-loading': joining }"
             >
               <i v-if="!joining" class="pi pi-plus-circle join-btn-icon"></i>
               <span>Join Project</span>
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -135,7 +159,10 @@ onMounted(() => { loadProjectsByRole(); });
       <div class="project-cards">
         <ProjectCard v-for="(project, index) in paginatedProjects" :key="project.projectId || index" :project="project" :activeMenuId="activeMenuId" :isLeader="isLeader" @edit="handleEditProject" @delete="handleDeleteProject" @openMenu="(id) => activeMenuId = id" @closeMenu="() => activeMenuId = null" />
         <div v-if="isLeader" class="add-project">
-          <Button label="Add project" icon="pi pi-plus" iconPos="left" class="addBut" @click="showAddProjectDialog" />
+          <button type="button" class="addBut" @click="showAddProjectDialog">
+            <i class="pi pi-plus"></i>
+            <span>Add project</span>
+          </button>
         </div>
       </div>
     </div>
@@ -149,11 +176,16 @@ onMounted(() => { loadProjectsByRole(); });
 
 <style scoped>
 .projects-page {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  min-height: 100%;
+  padding: 1.5rem;
+  background: #ffffff;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .projects-header {
@@ -162,6 +194,7 @@ onMounted(() => { loadProjectsByRole(); });
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+  width: 100%;
 }
 
 .title-projects {
@@ -242,6 +275,13 @@ onMounted(() => { loadProjectsByRole(); });
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.join-button:focus,
+.join-button:focus-visible,
+.addBut:focus,
+.addBut:focus-visible {
+  outline: none;
+}
+
 .join-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #9a1e1e 0%, #7a1616 100%);
   transform: translateY(-1px);
@@ -288,6 +328,7 @@ onMounted(() => { loadProjectsByRole(); });
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
 }
 
 .projects-stats {
@@ -296,6 +337,7 @@ onMounted(() => { loadProjectsByRole(); });
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+  width: 100%;
 }
 
 .subtitle {
@@ -310,6 +352,7 @@ onMounted(() => { loadProjectsByRole(); });
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
+  width: 100%;
 }
 
 .add-project {
@@ -331,6 +374,123 @@ onMounted(() => { loadProjectsByRole(); });
   border-radius: 18px !important;
   font-size: 1rem !important;
   font-weight: 600 !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.projects-page.dark-projects {
+  background: #080b12;
+  color: #eef2f8;
+}
+
+:global(.dark-projects .p-ink),
+:global(.dark-projects .p-ink-active),
+:global(.dark-projects .p-ripple .p-ink),
+:global(.dark-projects .p-ripple .p-ink-active),
+:global(.dark-projects .p-button::before),
+:global(.dark-projects .p-button::after),
+:global(.dark-projects .p-paginator-element::before),
+:global(.dark-projects .p-paginator-element::after) {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  content: none !important;
+  transform: none !important;
+}
+
+:global(.dark-projects .p-button),
+:global(.dark-projects .p-button:focus),
+:global(.dark-projects .p-button:focus-visible),
+:global(.dark-projects .p-paginator-element),
+:global(.dark-projects .p-paginator-element:focus),
+:global(.dark-projects .p-paginator-element:focus-visible) {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.dark-projects .title-projects,
+.dark-projects .subtitle {
+  color: #ff4f82;
+}
+
+.dark-projects .join-container {
+  background: #10141d;
+  border-color: #242a36;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+}
+
+.dark-projects .join-container:focus-within {
+  border-color: #2f3747;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+}
+
+.dark-projects .join-icon {
+  color: #a7b0bf;
+}
+
+.dark-projects .join-input {
+  color: #f8fafc;
+}
+
+.dark-projects .join-input::placeholder {
+  color: #7d8798;
+}
+
+.dark-projects .join-button {
+  background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+  box-shadow: 0 10px 24px rgba(225, 29, 72, 0.2);
+}
+
+.dark-projects .join-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+}
+
+.dark-projects .addBut {
+  background:
+      linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98)) !important;
+  color: #ff4f82 !important;
+  border-color: rgba(244, 63, 115, 0.3) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-projects :deep(.p-paginator) {
+  background: transparent;
+  color: #a7b0bf;
+  border: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  width: auto;
+}
+
+.dark-projects :deep(.p-paginator .p-paginator-page),
+.dark-projects :deep(.p-paginator .p-paginator-prev),
+.dark-projects :deep(.p-paginator .p-paginator-next) {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  background: #10141d;
+  border: 1px solid #242a36;
+  color: #a7b0bf;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.dark-projects :deep(.p-paginator .p-highlight) {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #ffffff;
 }
 
 @media (max-width: 768px) {

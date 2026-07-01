@@ -25,10 +25,10 @@ const chartData = computed(() => {
 })
 
 const chartOptions = computed(() => {
+  const isDark = document.documentElement.dataset.theme === 'dark'
   const documentStyle = getComputedStyle(document.documentElement)
-  const textColor = documentStyle.getPropertyValue('--text-color') || '#4b5563'
-  const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary') || '#6b7280'
-  const surfaceBorder = documentStyle.getPropertyValue('--surface-border') || '#e5e7eb'
+  const textColorSecondary = isDark ? '#a7b0bf' : (documentStyle.getPropertyValue('--text-color-secondary') || '#6b7280')
+  const surfaceBorder = isDark ? '#252b38' : (documentStyle.getPropertyValue('--surface-border') || '#e5e7eb')
 
   return {
     indexAxis: 'y',

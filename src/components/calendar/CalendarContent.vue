@@ -896,12 +896,12 @@ export default {
 }
 
 .tasks-list::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--scrollbar-track);
   border-radius: 2px;
 }
 
 .tasks-list::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--scrollbar-thumb);
   border-radius: 2px;
 }
 

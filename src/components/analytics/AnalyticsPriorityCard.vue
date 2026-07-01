@@ -24,9 +24,10 @@ const chartData = computed(() => {
 })
 
 const chartOptions = computed(() => {
+  const isDark = document.documentElement.dataset.theme === 'dark'
   const documentStyle = getComputedStyle(document.documentElement)
-  const textColor = documentStyle.getPropertyValue('--text-color') || '#4b5563'
-  const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary') || '#6b7280'
+  const textColorSecondary = isDark ? '#a7b0bf' : (documentStyle.getPropertyValue('--text-color-secondary') || '#6b7280')
+  const surfaceBorder = isDark ? '#252b38' : '#e5e7eb'
 
   return {
     maintainAspectRatio: false,
@@ -48,7 +49,7 @@ const chartOptions = computed(() => {
       },
       y: {
         ticks: { color: textColorSecondary },
-        grid: { color: '#e5e7eb' },
+        grid: { color: surfaceBorder },
         title: {
           display: true,
           text: 'Percentage (%)',

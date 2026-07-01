@@ -14,6 +14,7 @@ import Profile from "@/pages/profile.component.vue";
 import ProjectsComponent from "@/pages/projects.component.vue";
 import Subscription from "@/pages/subscription/subscription-content.component.vue";
 import Identification from "@/pages/identification-frame/identification-frame.component.vue";
+import Notifications from "@/pages/notifications.component.vue";
 
 const routes = [
     { path: '/login', component: Login, meta: { title: 'Login' } },
@@ -34,6 +35,7 @@ const routes = [
             { path: 'analytics', component: Analytics, meta: { title: 'Analytics' } },
             { path: 'team', component: Team, meta: { title: 'Team' } },
             { path: 'new-post', component: NewPost, meta: { title: 'Post' } },
+            { path: 'notifications', component: Notifications, meta: { title: 'Notifications' } },
             { path: 'profile/:id', name:'profile', component: Profile, meta: { title: 'Profile' } },
         ]
     }

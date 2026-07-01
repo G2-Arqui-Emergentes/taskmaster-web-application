@@ -74,6 +74,10 @@ export default {
   background-color: white;
 }
 
+:global(html[data-theme="dark"]) .toolbar {
+  background-color: #080b12;
+}
+
 .content-wrapper {
   display: flex;
   flex: 1;
@@ -110,6 +114,11 @@ export default {
     background-color: #f8f9fb;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
     margin-top: 120px;
+  }
+
+  :global(html[data-theme="dark"]) .sidebar-container {
+    background-color: #080b12;
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.42);
   }
 
   .sidebar-container.sidebar-open {

@@ -141,13 +141,13 @@ function handleCloseMenu() {
 }
 
 ::-webkit-scrollbar {
-  width: 0.2rem;
+  width: 0.35rem;
 }
 ::-webkit-scrollbar-track {
-  background-color: transparent;
+  background-color: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
   border-radius: 10px;
-  background-color: rgba(0,0,0,0.2);
+  background-color: var(--scrollbar-thumb);
 }
 </style>

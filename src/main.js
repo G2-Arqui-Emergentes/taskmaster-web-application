@@ -41,6 +41,26 @@ import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
 import router from "@/router/index.js";
 
+const applyInitialTheme = () => {
+  const themePreference = localStorage.getItem('theme') || 'light';
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const resolvedTheme = themePreference === 'system'
+      ? (systemPrefersDark ? 'dark' : 'light')
+      : themePreference;
+
+  document.documentElement.dataset.theme = resolvedTheme;
+  document.documentElement.dataset.themePreference = themePreference;
+  window.dispatchEvent(new CustomEvent('theme-changed', {
+    detail: {
+      theme: resolvedTheme,
+      preference: themePreference
+    }
+  }));
+};
+
+applyInitialTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyInitialTheme);
+
 //gtag
 import { configure } from "vue-gtag";
 import { createGtag } from "vue-gtag";
