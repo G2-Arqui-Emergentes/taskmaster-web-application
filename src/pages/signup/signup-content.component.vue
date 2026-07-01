@@ -1,6 +1,7 @@
 <script>
 import { RegisterService } from '@/services/register.service';
 import taskmasterLogo from "@/assets/taskmaster-logo.svg?url";
+import registerImage from "@/assets/regi.png";
 
 export default {
   name: "signup-content",
@@ -29,7 +30,7 @@ export default {
       },
       success_message: 'Your account has been created successfully!',
       logoUrl: taskmasterLogo,
-      leftImageUrl: "src/assets/regi.png"
+      leftImageUrl: registerImage
     }
   },
   methods: {
