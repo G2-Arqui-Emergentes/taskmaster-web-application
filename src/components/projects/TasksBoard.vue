@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import TaskColumn from './TaskColumn.vue'
 import { getTasksByProjectAndStatus, createTask as createTaskApi } from '@/services/task.service.js'
 import { getProjectById } from '@/services/project.service.js'
@@ -28,6 +28,8 @@ const projectDetails = ref(null)
 const showCreateTaskModal = ref(false)
 const projectMembers = ref([])
 const activeMenuId = ref(null)
+const currentTheme = ref(document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light')
+const isDarkTheme = computed(() => currentTheme.value === 'dark')
 
 const project = computed(() => projectDetails.value || store.state.selectedProject)
 const projectImageSrc = computed(() => {
@@ -117,9 +119,29 @@ const copyProjectCode = async (code) => {
   await navigator.clipboard.writeText(String(code));
 }
 
+const resolveThemePreference = () => {
+  const preference = localStorage.getItem('theme') || 'light'
+  if (preference === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return preference
+}
+
+const syncTheme = (event) => {
+  currentTheme.value = event?.detail?.theme || document.documentElement.dataset.theme || resolveThemePreference()
+}
+
 onMounted(async () => {
+  currentTheme.value = document.documentElement.dataset.theme || resolveThemePreference()
+  window.addEventListener('theme-changed', syncTheme)
+  window.addEventListener('storage', syncTheme)
   await fetchProjectDetails()
   await fetchTasks()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('theme-changed', syncTheme)
+  window.removeEventListener('storage', syncTheme)
 })
 
 const getTasksByState = (state) => {
@@ -159,7 +181,7 @@ const handleCloseMenu = () => {
 </script>
 
 <template>
-  <section class="board-bg">
+  <section class="board-bg" :class="{ 'dark-tasks-board': isDarkTheme }">
     <div class="board-container">
       <header class="board-header">
         <div v-if="project" class="project-summary-card modern">
@@ -251,7 +273,8 @@ const handleCloseMenu = () => {
 .board-bg {
   --brand-500: #b22222;
   --brand-600: #8f1c1c;
-  min-height: 100vh;
+  min-height: 100%;
+  box-sizing: border-box;
   background: linear-gradient(120deg, #f8fafc 60%, #e6f7f1 100%);
 }
 
@@ -403,6 +426,142 @@ const handleCloseMenu = () => {
   color: var(--brand-600);
   font-size: 1.2rem;
   font-weight: 600;
+}
+
+.board-bg.dark-tasks-board {
+  --brand-500: #ff4f82;
+  --brand-600: #fb7185;
+  background: #080b12;
+  color: #eef2f8;
+}
+
+.dark-tasks-board .subtitle,
+.dark-tasks-board .title-projects {
+  color: #ff4f82;
+}
+
+.dark-tasks-board .project-summary-card.modern,
+.dark-tasks-board .column-card {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border-color: rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-tasks-board .project-summary-desc,
+.dark-tasks-board .code-label,
+.dark-tasks-board .code-text {
+  color: #a7b0bf;
+}
+
+.dark-tasks-board .code-box {
+  background: #10141d;
+  border-color: rgba(244, 63, 115, 0.4);
+}
+
+.dark-tasks-board .copy-btn {
+  color: #ff4f82;
+}
+
+.dark-tasks-board .add-task.modern {
+  background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+  box-shadow: 0 10px 24px rgba(225, 29, 72, 0.2);
+}
+
+.dark-tasks-board .add-task.modern:hover {
+  background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+}
+
+.dark-tasks-board .loader-modern {
+  color: #ff4f82;
+}
+
+.dark-tasks-board :deep(.p-card) {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98)) !important;
+  border-color: rgba(244, 63, 115, 0.24) !important;
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-tasks-board :deep(.p-card .p-card-body),
+.dark-tasks-board :deep(.p-card .p-card-content),
+.dark-tasks-board :deep(.p-card .p-card-title) {
+  background: transparent;
+  color: #eef2f8;
+}
+
+.dark-tasks-board :deep(.enhanced-column) {
+  box-shadow: none;
+}
+
+.dark-tasks-board :deep(.column-title.todo) {
+  color: #ff8cae;
+}
+
+.dark-tasks-board :deep(.column-title.inprogress) {
+  color: #fbbf24;
+}
+
+.dark-tasks-board :deep(.column-title.done) {
+  color: #6ee7b7;
+}
+
+.dark-tasks-board :deep(.task-title) {
+  color: #eef2f8;
+}
+
+.dark-tasks-board :deep(.task-description),
+.dark-tasks-board :deep(.task-meta) {
+  color: #a7b0bf;
+}
+
+.dark-tasks-board :deep(.menu-btn:hover) {
+  background: rgba(244, 63, 115, 0.08);
+}
+
+.dark-tasks-board :deep(.menu-btn i),
+.dark-tasks-board :deep(.menu-btn:hover i) {
+  color: #ff4f82;
+}
+
+.dark-tasks-board :deep(.dropdown-menu) {
+  background: #10141d;
+  border-color: #242a36;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.38);
+}
+
+.dark-tasks-board :deep(.dropdown-item) {
+  color: #d8dee9;
+}
+
+.dark-tasks-board :deep(.dropdown-item:hover) {
+  background: rgba(244, 63, 115, 0.08);
+}
+
+.dark-tasks-board :deep(.dropdown-item.edit) {
+  color: #a7b0bf;
+}
+
+.dark-tasks-board :deep(.dropdown-item.delete) {
+  color: #f87171;
+  border-top-color: #242a36;
+}
+
+.dark-tasks-board :deep(.dropdown-item.delete:hover) {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.dark-tasks-board :deep(.checkmark) {
+  border-color: #4b5563;
+}
+
+.dark-tasks-board :deep(.checkbox-wrapper:hover .checkmark) {
+  border-color: #ff4f82;
+}
+
+.dark-tasks-board :deep(.checkbox-wrapper input:checked ~ .checkmark) {
+  background-color: #ff4f82;
+  border-color: #ff4f82;
 }
 
 @media (max-width: 1200px) {

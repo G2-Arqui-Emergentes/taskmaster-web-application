@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Paginator from 'primevue/paginator';
 import Toast from 'primevue/toast';
 import TeamProjectCard from './TeamProjectCard.vue';
@@ -9,6 +9,8 @@ const emit = defineEmits(['project-selected']);
 
 const projects = ref([]);
 const currentUser = ref(JSON.parse(localStorage.getItem('user') || 'null'));
+const currentTheme = ref(document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light');
+const isDarkTheme = computed(() => currentTheme.value === 'dark');
 
 const isLeader = () => {
   const user = currentUser.value;
@@ -57,13 +59,33 @@ const loadProjectsByRole = async () => {
   }
 };
 
+const resolveThemePreference = () => {
+  const preference = localStorage.getItem('theme') || 'light';
+  if (preference === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return preference;
+};
+
+const syncTheme = (event) => {
+  currentTheme.value = event?.detail?.theme || document.documentElement.dataset.theme || resolveThemePreference();
+};
+
 onMounted(() => {
+  currentTheme.value = document.documentElement.dataset.theme || resolveThemePreference();
+  window.addEventListener('theme-changed', syncTheme);
+  window.addEventListener('storage', syncTheme);
   loadProjectsByRole();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('theme-changed', syncTheme);
+  window.removeEventListener('storage', syncTheme);
 });
 </script>
 
 <template>
-  <div class="team-projects-page">
+  <div class="team-projects-page" :class="{ 'dark-team-projects': isDarkTheme }">
     <div class="projects-header">
       <h1 class="title-projects">Team</h1>
       <p class="subtitle-header">Select a project to view its members</p>
@@ -144,6 +166,64 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
+}
+
+.team-projects-page.dark-team-projects {
+
+  color: #eef2f8;
+}
+
+.dark-team-projects .title-projects,
+.dark-team-projects .subtitle {
+  color: #ff4f82;
+}
+
+.dark-team-projects .subtitle-header {
+  color: #a7b0bf;
+}
+
+.dark-team-projects :deep(.p-paginator) {
+  background: transparent;
+  border: 0;
+  color: #a7b0bf;
+}
+
+.dark-team-projects :deep(.p-paginator .p-paginator-page),
+.dark-team-projects :deep(.p-paginator .p-paginator-prev),
+.dark-team-projects :deep(.p-paginator .p-paginator-next) {
+  background: #10141d;
+  border: 1px solid #242a36;
+  color: #a7b0bf;
+  border-radius: 8px;
+}
+
+.dark-team-projects :deep(.p-paginator .p-highlight) {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #ffffff;
+}
+
+.dark-team-projects :deep(.team-project-card) {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border: 1px solid rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-team-projects :deep(.team-project-card:hover) {
+  box-shadow: 0 18px 45px rgba(225, 29, 72, 0.2);
+}
+
+.dark-team-projects :deep(.project-overlay) {
+  background: rgba(225, 29, 72, 0.82);
+}
+
+.dark-team-projects :deep(.project-name) {
+  color: #eef2f8;
+}
+
+.dark-team-projects :deep(.project-leader) {
+  color: #a7b0bf;
 }
 
 @media (max-width: 768px) {

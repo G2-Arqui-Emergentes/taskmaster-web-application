@@ -15,10 +15,14 @@ export default {
       currentPage: 1,
       perPage: 10,
       readIds: [],
-      loading: false
+      loading: false,
+      currentTheme: document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light'
     };
   },
   computed: {
+    isDarkTheme() {
+      return this.currentTheme === "dark";
+    },
     taskNotifications() {
       return this.notifications.filter((notification) => this.getNotificationType(notification) === "tasks");
     },
@@ -82,10 +86,27 @@ export default {
     }
   },
   async mounted() {
+    this.currentTheme = document.documentElement.dataset.theme || this.resolveThemePreference();
+    window.addEventListener("theme-changed", this.syncTheme);
+    window.addEventListener("storage", this.syncTheme);
     await this.fetchNotifications();
     await this.fetchProjectsForNavigation();
   },
+  beforeUnmount() {
+    window.removeEventListener("theme-changed", this.syncTheme);
+    window.removeEventListener("storage", this.syncTheme);
+  },
   methods: {
+    resolveThemePreference() {
+      const preference = localStorage.getItem("theme") || "light";
+      if (preference === "system") {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      return preference;
+    },
+    syncTheme(event) {
+      this.currentTheme = event?.detail?.theme || document.documentElement.dataset.theme || this.resolveThemePreference();
+    },
     async fetchNotifications() {
       this.loading = true;
       try {
@@ -221,7 +242,7 @@ export default {
 </script>
 
 <template>
-  <section class="notifications-page">
+  <section class="notifications-page" :class="{ 'dark-notifications': isDarkTheme }">
     <header class="page-header">
       <div>
         <h1>All Notifications</h1>
@@ -718,6 +739,147 @@ export default {
 
 .tip-banner p {
   font-size: 0.88rem;
+}
+
+.notifications-page.dark-notifications {
+  --accent: #ff4f82;
+  --text: #eef2f8;
+  --muted: #a7b0bf;
+  background: #080b12;
+  color: #eef2f8;
+}
+
+.dark-notifications .page-header h1 {
+  color: #eef2f8;
+}
+
+.dark-notifications .page-header p,
+.dark-notifications .notification-copy small,
+.dark-notifications .table-footer p,
+.dark-notifications .tip-banner {
+  color: #a7b0bf;
+}
+
+.dark-notifications .ghost-button,
+.dark-notifications .type-filter,
+.dark-notifications .search-box,
+.dark-notifications .per-page,
+.dark-notifications .notifications-table {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border-color: rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+}
+
+.dark-notifications .ghost-button {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.dark-notifications .ghost-button:hover {
+  background: rgba(244, 63, 115, 0.08);
+}
+
+.dark-notifications .type-filter select,
+.dark-notifications .per-page select,
+.dark-notifications .search-box input {
+  color: #eef2f8;
+}
+
+.dark-notifications .search-box input {
+  background: transparent;
+}
+
+.dark-notifications .search-box input::placeholder {
+  color: #7d8798;
+}
+
+.dark-notifications .type-filter .pi-filter,
+.dark-notifications .type-filter .pi-chevron-down,
+.dark-notifications .per-page .pi-chevron-down,
+.dark-notifications .search-box i,
+.dark-notifications .row-actions {
+  color: #a7b0bf;
+}
+
+.dark-notifications .filters-row,
+.dark-notifications .table-header,
+.dark-notifications .notification-row,
+.dark-notifications .empty-state {
+  border-bottom-color: #252b38;
+}
+
+.dark-notifications .tab-button {
+  color: #a7b0bf;
+}
+
+.dark-notifications .tab-button small {
+  background: #1b2230;
+  color: #a7b0bf;
+}
+
+.dark-notifications .tab-button.active {
+  color: #ff4f82;
+  border-bottom-color: #ff4f82;
+}
+
+.dark-notifications .tab-button.active small {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.dark-notifications .notifications-table {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-notifications .table-header {
+  color: #eef2f8;
+}
+
+.dark-notifications .notification-row {
+  background: transparent;
+  color: #eef2f8;
+}
+
+.dark-notifications .notification-row:hover {
+  background: rgba(244, 63, 115, 0.08);
+}
+
+.dark-notifications .notification-copy strong,
+.dark-notifications .date-cell {
+  color: #eef2f8;
+}
+
+.dark-notifications .notification-icon.tasks,
+.dark-notifications .type-pill.tasks {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+}
+
+.dark-notifications .notification-icon.projects,
+.dark-notifications .type-pill.projects {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+}
+
+.dark-notifications .pagination button,
+.dark-notifications .pagination span {
+  background: #10141d;
+  border-color: #242a36;
+  color: #a7b0bf;
+}
+
+.dark-notifications .pagination span {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #ffffff;
+}
+
+.dark-notifications .tip-banner {
+  background: rgba(225, 29, 72, 0.14);
+  border: 1px solid rgba(244, 63, 115, 0.24);
+}
+
+.dark-notifications .tip-banner i {
+  color: #ff4f82;
 }
 
 @media (max-width: 1100px) {

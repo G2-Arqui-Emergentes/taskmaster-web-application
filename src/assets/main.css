@@ -9,6 +9,13 @@
   font-family: "Poppins", sans-serif;
 }
 
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
 .modal-background {
   backdrop-filter: blur(1px);
   min-height: inherit;

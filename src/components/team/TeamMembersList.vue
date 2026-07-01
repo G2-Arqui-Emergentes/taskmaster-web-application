@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
 import { UserService } from '@/services/user.service.js';
@@ -17,6 +17,7 @@ const userService = new UserService();
 const teamMembers = ref([]);
 const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'));
 const isLeader = ref(false);
+const currentTheme = ref(document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light');
 const defaultAvatar = 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
 
 const showContactModal = ref(false);
@@ -32,6 +33,7 @@ const selectedMemberIds = ref([]);
 
 const currentUserId = computed(() => currentUser.value?.id);
 const selectedCount = computed(() => selectedMemberIds.value.length);
+const isDarkTheme = computed(() => currentTheme.value === 'dark');
 
 const loadTeamMembers = async () => {
   try {
@@ -159,13 +161,33 @@ const openGroupTeamsMeeting = () => {
   cancelSelectionMode();
 };
 
+const resolveThemePreference = () => {
+  const preference = localStorage.getItem('theme') || 'light';
+  if (preference === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return preference;
+};
+
+const syncTheme = (event) => {
+  currentTheme.value = event?.detail?.theme || document.documentElement.dataset.theme || resolveThemePreference();
+};
+
 onMounted(() => {
+  currentTheme.value = document.documentElement.dataset.theme || resolveThemePreference();
+  window.addEventListener('theme-changed', syncTheme);
+  window.addEventListener('storage', syncTheme);
   loadTeamMembers();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('theme-changed', syncTheme);
+  window.removeEventListener('storage', syncTheme);
 });
 </script>
 
 <template>
-  <div class="team-members-page">
+  <div class="team-members-page" :class="{ 'dark-team-members': isDarkTheme }">
     <div class="team__content-banner flex justify-content-center align-items-center flex-column gap-3">
       <h1 class="font-italic team__content-title text-6xl md:text-7xl xl:text-8xl m-0">
         {{ project.name }}'s Team
@@ -482,6 +504,104 @@ onMounted(() => {
 }
 .fade-enter, .fade-leave-to {
   opacity: 0;
+}
+
+.team-members-page.dark-team-members {
+  background: #080b12;
+  color: #eef2f8;
+}
+
+.dark-team-members .team__content-banner {
+  background: linear-gradient(135deg, #e11d48 0%, #606e9b 100%);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-team-members .plan-meeting-btn {
+  background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+  box-shadow: 0 10px 24px rgba(225, 29, 72, 0.2);
+}
+
+.dark-team-members .plan-meeting-btn:hover {
+  background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+}
+
+.dark-team-members .back-icon,
+.dark-team-members .back-button-container:hover .back-text {
+  color: #ff4f82;
+}
+
+.dark-team-members .back-text {
+  color: #a7b0bf;
+}
+
+.dark-team-members .floating-action-bar,
+.dark-team-members .popup__content {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98)) !important;
+  border: 1px solid rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-team-members .selection-text,
+.dark-team-members .popup__content-title {
+  color: #eef2f8;
+}
+
+.dark-team-members .popup__member-email,
+.dark-team-members .popup__member-description,
+.dark-team-members .text-gray-500 {
+  color: #a7b0bf !important;
+}
+
+.dark-team-members .message-textarea {
+  background: #10141d;
+  border-color: #242a36;
+  color: #eef2f8;
+}
+
+.dark-team-members .message-textarea::placeholder {
+  color: #7d8798;
+}
+
+.dark-team-members :deep(.team-member-card) {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border-color: rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.dark-team-members :deep(.team-member-card.selection-mode:hover) {
+  background: rgba(244, 63, 115, 0.08);
+  border-color: rgba(244, 63, 115, 0.34);
+}
+
+.dark-team-members :deep(.custom-checkbox) {
+  accent-color: #ff4f82;
+}
+
+.dark-team-members :deep(.member-name) {
+  color: #eef2f8;
+}
+
+.dark-team-members :deep(.you-badge) {
+  color: #a7b0bf;
+}
+
+.dark-team-members :deep(.leader-badge) {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.dark-team-members :deep(.action-icon) {
+  color: #a7b0bf;
+}
+
+.dark-team-members :deep(.action-icon:hover) {
+  color: #ff4f82;
+}
+
+.dark-team-members :deep(.delete-icon:hover) {
+  color: #f87171;
 }
 
 @media (max-width: 768px) {

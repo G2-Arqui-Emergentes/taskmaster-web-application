@@ -12,6 +12,11 @@ export default {
       defaultAvatar: 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg'
     };
   },
+  computed: {
+    isDarkTheme() {
+      return document.documentElement.dataset.theme === 'dark';
+    }
+  },
   watch: {
     visible: {
       immediate: true,
@@ -43,7 +48,7 @@ export default {
 
 <template>
   <div v-if="visible" class="modal-overlay" @click.self="close">
-    <div class="modal-box">
+    <div class="modal-box" :class="{ 'dark-modal': isDarkTheme }">
       <div class="modal-header">
         <h2 class="modal-title">Update Profile Picture</h2>
         <button class="modal-close" @click="close"><i class="pi pi-times"></i></button>
@@ -208,5 +213,63 @@ export default {
 
 .btn-save:hover {
   background: #8f0028;
+}
+
+.modal-box.dark-modal {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border: 1px solid rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+.dark-modal .modal-header,
+.dark-modal .modal-footer {
+  border-color: #252b38;
+}
+
+.dark-modal .modal-title,
+.dark-modal .modal-close {
+  color: #ff4f82;
+}
+
+.dark-modal .form-group label,
+.dark-modal .preview-section label {
+  color: #eef2f8;
+}
+
+.dark-modal .form-group input {
+  background: #10141d;
+  border-color: #242a36;
+  color: #eef2f8;
+}
+
+.dark-modal .form-group input::placeholder {
+  color: #7d8798;
+}
+
+.dark-modal .form-group input:focus {
+  border-color: #ff4f82;
+}
+
+.dark-modal .preview-image {
+  border-color: #ff4f82;
+}
+
+.dark-modal .btn-cancel {
+  background: #10141d;
+  border-color: #242a36;
+  color: #a7b0bf;
+}
+
+.dark-modal .btn-cancel:hover {
+  background: rgba(244, 63, 115, 0.08);
+}
+
+.dark-modal .btn-save {
+  background: #e11d48;
+}
+
+.dark-modal .btn-save:hover {
+  background: #be123c;
 }
 </style>

@@ -160,6 +160,47 @@ const handleCardClick = () => {
   color: #dc2626;
 }
 
+:global(html[data-theme="dark"]) .team-member-card {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border-color: rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+:global(html[data-theme="dark"]) .team-member-card.selection-mode:hover {
+  background: rgba(244, 63, 115, 0.08);
+  border-color: rgba(244, 63, 115, 0.34);
+}
+
+:global(html[data-theme="dark"]) .custom-checkbox {
+  accent-color: #ff4f82;
+}
+
+:global(html[data-theme="dark"]) .member-name {
+  color: #eef2f8;
+}
+
+:global(html[data-theme="dark"]) .you-badge {
+  color: #a7b0bf;
+}
+
+:global(html[data-theme="dark"]) .leader-badge {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+:global(html[data-theme="dark"]) .action-icon {
+  color: #a7b0bf;
+}
+
+:global(html[data-theme="dark"]) .action-icon:hover {
+  color: #ff4f82;
+}
+
+:global(html[data-theme="dark"]) .delete-icon:hover {
+  color: #f87171;
+}
+
 @media (max-width: 768px) {
   .member-info {
     gap: 0.75rem;

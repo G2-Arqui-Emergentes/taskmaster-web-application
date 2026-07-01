@@ -18,16 +18,28 @@ export default {
       allProjects: [],
       allUsers: [],
       loading: false,
+      currentTheme: document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light',
       userService: new UserService()
     }
   },
   async mounted() {
+    this.currentTheme = document.documentElement.dataset.theme || this.resolveThemePreference()
+    window.addEventListener('theme-changed', this.syncTheme)
+    window.addEventListener('storage', this.syncTheme)
     this.selectedDateObj = new Date()
     await this.loadAllData()
+  },
+  beforeUnmount() {
+    window.removeEventListener('theme-changed', this.syncTheme)
+    window.removeEventListener('storage', this.syncTheme)
   },
   computed: {
     user() {
       return this.$store.state.user || JSON.parse(localStorage.getItem('user') || '{}')
+    },
+
+    isDarkTheme() {
+      return this.currentTheme === 'dark'
     },
 
     isLeader() {
@@ -104,6 +116,18 @@ export default {
     }
   },
   methods: {
+    resolveThemePreference() {
+      const preference = localStorage.getItem('theme') || 'light'
+      if (preference === 'system') {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      }
+      return preference
+    },
+
+    syncTheme(event) {
+      this.currentTheme = event?.detail?.theme || document.documentElement.dataset.theme || this.resolveThemePreference()
+    },
+
     async loadAllData() {
       this.loading = true
       try {
@@ -308,7 +332,7 @@ export default {
 </script>
 
 <template>
-  <div class="calendar-page">
+  <div class="calendar-page" :class="{ 'dark-calendar': isDarkTheme }">
 
     <div class="page-header">
       <h1 class="title-projects text-4xl font-medium">Calendar</h1>
@@ -903,6 +927,144 @@ export default {
 .tasks-list::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 2px;
+}
+
+.calendar-page.dark-calendar {
+  --brand-500: #ff4f82;
+  --brand-600: #fb7185;
+  background: #080b12;
+  color: #eef2f8;
+}
+
+.dark-calendar .title-projects,
+.dark-calendar .calendar-subtitle {
+  color: #ff4f82;
+}
+
+.dark-calendar .calendar-widget,
+.dark-calendar .events-section,
+.dark-calendar .quick-actions-section {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border-color: rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-calendar .calendar-navigation,
+.dark-calendar .quick-actions-header {
+  border-bottom-color: #252b38;
+}
+
+.dark-calendar .nav-button {
+  background: #10141d;
+  border-color: #242a36;
+  color: #eef2f8;
+}
+
+.dark-calendar .nav-button:hover {
+  background: rgba(244, 63, 115, 0.08);
+  border-color: rgba(244, 63, 115, 0.34);
+}
+
+.dark-calendar .month-year,
+.dark-calendar .events-title,
+.dark-calendar .quick-actions-title,
+.dark-calendar .task-title {
+  color: #eef2f8;
+}
+
+.dark-calendar .weekday,
+.dark-calendar .task-date,
+.dark-calendar .task-description,
+.dark-calendar .task-project,
+.dark-calendar .task-assignee,
+.dark-calendar .info-item p {
+  color: #a7b0bf;
+}
+
+.dark-calendar .week-number,
+.dark-calendar .no-events {
+  color: #7d8798;
+}
+
+.dark-calendar .calendar-day {
+  color: #d8dee9;
+}
+
+.dark-calendar .calendar-day:hover {
+  background: rgba(244, 63, 115, 0.08);
+}
+
+.dark-calendar .calendar-day.other-month {
+  color: #4b5563;
+}
+
+.dark-calendar .calendar-day.selected,
+.dark-calendar .calendar-day.today {
+  color: #ffffff;
+}
+
+.dark-calendar .task-dot {
+  box-shadow: 0 0 0 1px #10141d;
+}
+
+.dark-calendar .selected-date-card {
+  background: linear-gradient(135deg, #e11d48 0%, #606e9b 100%);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-calendar .info-item:hover {
+  background-color: rgba(244, 63, 115, 0.08);
+}
+
+.dark-calendar .info-icon i {
+  color: #a7b0bf !important;
+}
+
+.dark-calendar .task-card {
+  background: #10141d;
+  border-color: #242a36;
+  color: #eef2f8;
+}
+
+.dark-calendar .task-todo {
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.08));
+}
+
+.dark-calendar .task-inprogress {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.18), rgba(59, 130, 246, 0.08));
+}
+
+.dark-calendar .task-done {
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.08));
+}
+
+.dark-calendar .task-default {
+  background: linear-gradient(to right, rgba(107, 114, 128, 0.18), rgba(107, 114, 128, 0.08));
+}
+
+.dark-calendar .status-todo {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.dark-calendar .status-inprogress {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+}
+
+.dark-calendar .status-done {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+}
+
+.dark-calendar .status-default {
+  background: rgba(107, 114, 128, 0.18);
+  color: #d1d5db;
+}
+
+.dark-calendar .task-project {
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 1024px) {

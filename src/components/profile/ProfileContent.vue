@@ -27,6 +27,7 @@ export default {
         desktop: true
       },
       selectedTheme: localStorage.getItem('theme') || 'light',
+      currentTheme: document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light',
       passwordLastUpdated: '4 months ago',
       refreshKey: 0
     };
@@ -46,6 +47,9 @@ export default {
       if (roles.includes('ROLE_MEMBER')) return 'Member';
       if (roles.includes('ROLE_ADMIN')) return 'Admin';
       return 'Member';
+    },
+    isDarkTheme() {
+      return this.currentTheme === 'dark';
     }
   },
   methods: {
@@ -128,6 +132,7 @@ export default {
 
       document.documentElement.dataset.theme = resolvedTheme;
       document.documentElement.dataset.themePreference = this.selectedTheme;
+      this.currentTheme = resolvedTheme;
       window.dispatchEvent(new CustomEvent('theme-changed', {
         detail: {
           theme: resolvedTheme,
@@ -153,7 +158,7 @@ export default {
 </script>
 
 <template>
-  <div class="profile-page">
+  <div class="profile-page" :class="{ 'dark-profile': isDarkTheme }">
     <div class="profile-header">
       <h1 class="profile-title">Account Settings</h1>
       <p class="profile-subtitle">Manage your profile, security and preferences.</p>
@@ -722,6 +727,77 @@ input:checked + .toggle-slider:before {
 .profile-card::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 4px;
+}
+
+.profile-page.dark-profile {
+  background: #080b12;
+  color: #eef2f8;
+}
+
+.dark-profile .profile-title,
+.dark-profile .profile-role,
+.dark-profile .header-left i,
+.dark-profile .edit-header-icon,
+.dark-profile .option-left i,
+.dark-profile .option-arrow,
+.dark-profile .theme-left i,
+.dark-profile .theme-check,
+.dark-profile .status-active {
+  color: #ff4f82;
+}
+
+.dark-profile .profile-subtitle,
+.dark-profile .info-value,
+.dark-profile .option-subtitle {
+  color: #a7b0bf;
+}
+
+.dark-profile .profile-card,
+.dark-profile .security-card,
+.dark-profile .notifications-card,
+.dark-profile .appearance-card {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border-color: rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-profile .card-title,
+.dark-profile .profile-fullname,
+.dark-profile .info-label,
+.dark-profile .option-title,
+.dark-profile .notification-option .option-title,
+.dark-profile .theme-left span {
+  color: #eef2f8;
+}
+
+.dark-profile .profile-divider {
+  background: #252b38;
+}
+
+.dark-profile .security-option-rectangle,
+.dark-profile .theme-option {
+  background: #10141d;
+  border-color: rgba(244, 63, 115, 0.24);
+}
+
+.dark-profile .security-option-rectangle:hover,
+.dark-profile .theme-option:hover {
+  background: rgba(244, 63, 115, 0.08);
+  border-color: rgba(244, 63, 115, 0.34);
+}
+
+.dark-profile .theme-option.active {
+  background: #e11d48;
+  border-color: #e11d48;
+}
+
+.dark-profile .toggle-slider {
+  background-color: #4b5563;
+}
+
+.dark-profile input:checked + .toggle-slider {
+  background-color: #ff4f82;
 }
 
 @media (max-width: 900px) {

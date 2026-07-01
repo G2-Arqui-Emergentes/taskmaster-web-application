@@ -142,6 +142,29 @@ onMounted(() => {
   font-size: 0.7rem;
 }
 
+:global(html[data-theme="dark"]) .team-project-card {
+  background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
+  border: 1px solid rgba(244, 63, 115, 0.24);
+  color: #eef2f8;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+:global(html[data-theme="dark"]) .team-project-card:hover {
+  box-shadow: 0 18px 45px rgba(225, 29, 72, 0.2);
+}
+
+:global(html[data-theme="dark"]) .project-overlay {
+  background: rgba(225, 29, 72, 0.82);
+}
+
+:global(html[data-theme="dark"]) .project-name {
+  color: #eef2f8;
+}
+
+:global(html[data-theme="dark"]) .project-leader {
+  color: #a7b0bf;
+}
+
 @media (max-width: 768px) {
   .card-header {
     height: 160px;
