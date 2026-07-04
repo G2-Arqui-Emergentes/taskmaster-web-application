@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
 import { UserService } from '@/services/user.service.js';
+import { removeUserFromProject } from '@/services/project.service.js';
 import TeamMemberCard from './TeamMemberCard.vue';
 
 const props = defineProps({
@@ -25,6 +26,7 @@ const showMessageModal = ref(false);
 const showRemoveConfirm = ref(false);
 const selectedUser = ref(null);
 const userToRemove = ref(null);
+const removingMember = ref(false);
 const message = ref('');
 const messageSent = ref(true);
 
@@ -43,7 +45,7 @@ const loadTeamMembers = async () => {
     isLeader.value = props.project.leaderId === currentUser.value.id;
 
     const members = allUsers.filter(user => {
-      const userProjectIds = user.projectIds || [];
+      const userProjectIds = Array.isArray(user.projectIds) ? user.projectIds.map(Number) : [];
       return userProjectIds.includes(Number(props.project.projectId));
     });
 
@@ -121,18 +123,42 @@ const confirmRemoveMember = (member) => {
 };
 
 const closeRemoveConfirm = () => {
+  if (removingMember.value) return;
   showRemoveConfirm.value = false;
   userToRemove.value = null;
 };
 
 const confirmRemove = async () => {
-  toast.add({
-    severity: 'info',
-    summary: 'Coming Soon',
-    detail: `Remove member functionality coming soon`,
-    life: 3000
-  });
-  closeRemoveConfirm();
+  if (!userToRemove.value || removingMember.value) return;
+
+  removingMember.value = true;
+  try {
+    await removeUserFromProject(props.project.projectId, userToRemove.value.id);
+    teamMembers.value = teamMembers.value.filter(member => member.id !== userToRemove.value.id);
+    selectedMemberIds.value = selectedMemberIds.value.filter(id => id !== userToRemove.value.id);
+
+    toast.add({
+      severity: 'success',
+      summary: 'Member removed',
+      detail: `${userToRemove.value.name} was removed from ${props.project.name}.`,
+      life: 3000
+    });
+
+    showRemoveConfirm.value = false;
+    userToRemove.value = null;
+  } catch (error) {
+    const detail = error.response?.data?.message
+        || error.response?.data
+        || 'Could not remove this member from the project.';
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail,
+      life: 4000
+    });
+  } finally {
+    removingMember.value = false;
+  }
 };
 
 const openTeamsMeeting = (user) => {
@@ -159,6 +185,10 @@ const openGroupTeamsMeeting = () => {
   const teamsUrl = `https://teams.microsoft.com/l/meeting/new?subject=${subject}&attendees=${attendees}`;
   window.open(teamsUrl, '_blank');
   cancelSelectionMode();
+};
+
+const goBackToProjects = () => {
+  emit('back');
 };
 
 const resolveThemePreference = () => {
@@ -216,8 +246,15 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="back-button-container">
-      <i class="pi pi-arrow-left back-icon" @click="$emit('back')"></i>
+    <div
+        class="back-button-container"
+        role="button"
+        tabindex="0"
+        @click="goBackToProjects"
+        @keydown.enter="goBackToProjects"
+        @keydown.space.prevent="goBackToProjects"
+    >
+      <i class="pi pi-arrow-left back-icon"></i>
       <span class="back-text">Back to projects</span>
     </div>
 
@@ -288,8 +325,10 @@ onBeforeUnmount(() => {
           <p class="text-sm text-gray-500">This action cannot be undone.</p>
         </div>
         <div class="flex gap-3 mt-4 w-full">
-          <pv-button class="flex-1 p-2 bg-gray-400 hover:bg-gray-500 border-none text-white" @click="closeRemoveConfirm">Cancel</pv-button>
-          <pv-button class="flex-1 p-2 bg-red-600 hover:bg-red-700 border-none text-white" @click="confirmRemove">Remove</pv-button>
+          <pv-button class="flex-1 p-2 bg-gray-400 hover:bg-gray-500 border-none text-white" :disabled="removingMember" @click="closeRemoveConfirm">Cancel</pv-button>
+          <pv-button class="flex-1 p-2 bg-red-600 hover:bg-red-700 border-none text-white" :disabled="removingMember" @click="confirmRemove">
+            {{ removingMember ? 'Removing...' : 'Remove' }}
+          </pv-button>
         </div>
       </div>
     </div>

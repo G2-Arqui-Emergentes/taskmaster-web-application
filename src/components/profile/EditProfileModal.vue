@@ -12,7 +12,10 @@ export default {
         name: '',
         lastName: '',
         email: '',
-        salary: 0
+        salary: 0,
+        phone: '',
+        age: null,
+        bio: ''
       }
     };
   },
@@ -30,7 +33,10 @@ export default {
             name: this.userData.name || '',
             lastName: this.userData.lastName || '',
             email: this.userData.email || '',
-            salary: this.userData.salary || 0
+            salary: this.userData.salary || 0,
+            phone: this.userData.phone || '',
+            age: this.userData.age || null,
+            bio: this.userData.bio || ''
           };
         }
       }
@@ -73,6 +79,18 @@ export default {
           <div class="form-group">
             <label>Salary</label>
             <input type="number" v-model.number="form.salary" placeholder="Salary" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" v-model="form.phone" placeholder="Phone" />
+          </div>
+          <div class="form-group">
+            <label>Age</label>
+            <input type="number" v-model.number="form.age" placeholder="Age" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Bio</label>
+            <textarea v-model="form.bio" placeholder="Bio" rows="4"></textarea>
           </div>
         </div>
       </div>
@@ -164,15 +182,23 @@ export default {
   color: #1a1a2e;
 }
 
-.form-group input {
+.form-group input,
+.form-group textarea {
   padding: 0.75rem;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   font-size: 14px;
   outline: none;
+  font-family: inherit;
 }
 
-.form-group input:focus {
+.form-group textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
   border-color: #B80035;
 }
 
@@ -240,17 +266,20 @@ export default {
   color: #eef2f8;
 }
 
-.dark-modal .form-group input {
+.dark-modal .form-group input,
+.dark-modal .form-group textarea {
   background: #10141d;
   border-color: #242a36;
   color: #eef2f8;
 }
 
-.dark-modal .form-group input::placeholder {
+.dark-modal .form-group input::placeholder,
+.dark-modal .form-group textarea::placeholder {
   color: #7d8798;
 }
 
-.dark-modal .form-group input:focus {
+.dark-modal .form-group input:focus,
+.dark-modal .form-group textarea:focus {
   border-color: #ff4f82;
 }
 

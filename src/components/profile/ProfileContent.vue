@@ -28,7 +28,8 @@ export default {
       },
       selectedTheme: localStorage.getItem('theme') || 'light',
       currentTheme: document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light',
-      passwordLastUpdated: '4 months ago',
+      passwordLastUpdated: 'Not updated in this session',
+      passwordSubmitting: false,
       refreshKey: 0
     };
   },
@@ -69,12 +70,19 @@ export default {
 
       const resolvedSalaryRaw = overrides.salary ?? currentUser.salary ?? 0;
       const resolvedSalary = Number.isFinite(Number(resolvedSalaryRaw)) ? Number(resolvedSalaryRaw) : 0;
+      const resolvedAgeRaw = overrides.age ?? currentUser.age ?? null;
+      const resolvedAge = resolvedAgeRaw === null || resolvedAgeRaw === ''
+          ? null
+          : (Number.isFinite(Number(resolvedAgeRaw)) ? Number(resolvedAgeRaw) : null);
 
       return {
         name: resolvedName.toString().trim(),
         lastName: resolvedLastName.toString().trim(),
         imageUrl: resolvedImageUrl,
-        salary: resolvedSalary
+        salary: resolvedSalary,
+        phone: (overrides.phone ?? currentUser.phone ?? '').toString().trim(),
+        age: resolvedAge,
+        bio: (overrides.bio ?? currentUser.bio ?? '').toString().trim()
       };
     },
     toggleEditMode() {
@@ -104,7 +112,10 @@ export default {
         const updatedUser = this.buildUpdatePayload({
           name: formData?.name,
           lastName: formData?.lastName,
-          salary: formData?.salary
+          salary: formData?.salary,
+          phone: formData?.phone,
+          age: formData?.age,
+          bio: formData?.bio
         });
         const response = await this.userService.updateUser(updatedUser);
         this.$store.commit('setUserData', response);
@@ -115,9 +126,23 @@ export default {
         this.$toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || 'Could not update profile', life: 3000 });
       }
     },
-    async changePassword() {
-      this.$toast.add({ severity: 'info', summary: 'Coming Soon', detail: 'Password change feature will be available soon', life: 3000 });
-      this.showPasswordModal = false;
+    async changePassword(payload) {
+      if (this.passwordSubmitting) return;
+
+      this.passwordSubmitting = true;
+      try {
+        await this.userService.changePassword(payload?.current, payload?.new);
+        this.passwordLastUpdated = 'just now';
+        this.showPasswordModal = false;
+        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Password changed successfully', life: 3000 });
+      } catch (error) {
+        const detail = error.response?.data?.message
+            || error.response?.data
+            || 'Could not change password. Please verify your current password.';
+        this.$toast.add({ severity: 'error', summary: 'Error', detail, life: 4000 });
+      } finally {
+        this.passwordSubmitting = false;
+      }
     },
     selectTheme(theme) {
       this.selectedTheme = theme;
@@ -194,11 +219,11 @@ export default {
           </div>
           <div class="info-item">
             <div class="info-label">Phone</div>
-            <div class="info-value">Not provided</div>
+            <div class="info-value">{{ user.phone || 'Not provided' }}</div>
           </div>
           <div class="info-item">
             <div class="info-label">Age</div>
-            <div class="info-value">Not provided</div>
+            <div class="info-value">{{ user.age || 'Not provided' }}</div>
           </div>
           <div class="info-item">
             <div class="info-label">Salary</div>
@@ -206,7 +231,7 @@ export default {
           </div>
           <div class="info-item">
             <div class="info-label">Bio</div>
-            <div class="info-value">Not provided</div>
+            <div class="info-value">{{ user.bio || 'Not provided' }}</div>
           </div>
         </div>
       </div>
@@ -322,6 +347,7 @@ export default {
     />
     <ChangePasswordModal
         v-model:visible="showPasswordModal"
+        :submitting="passwordSubmitting"
         @changePassword="changePassword"
     />
     <UpdateImageModal

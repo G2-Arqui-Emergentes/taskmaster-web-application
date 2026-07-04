@@ -3,8 +3,11 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { getProjectsByMember } from '@/services/project.service.js'
 import { getTasksByUserId } from '@/services/task.service.js'
+import { getMemberAiDashboard } from '@/services/ai-dashboard.service.js'
+import { UserService } from '@/services/user.service.js'
 
 const router = useRouter()
+const userService = new UserService()
 
 const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 const userName = computed(() => currentUser.value?.name || 'Member')
@@ -20,33 +23,14 @@ const completedTasksCount = ref(0)
 const totalTasksCount = ref(0)
 const completionPercentage = ref(0)
 
-const smartVelocity = ref({ current: 4.2, max: 5.0 })
-const delayWarning = ref('AI predicts a 15% chance of delay on Project Neon due to recent review bottlenecks.')
-const suggestion1 = ref('Shift focus to "UI Assets" before 2 PM to maximize your morning peak productivity window.')
-const suggestion2 = ref('Consider rescheduling Thursday\'s meeting to clear a 4-hour Deep Work block.')
-const lastUpdated = ref('just now')
+const smartVelocity = ref(null)
+const aiSummary = ref('')
+const delayWarning = ref('')
+const performanceSuggestions = ref([])
+const lastUpdated = ref('Not generated yet')
 
 const upcomingTasks = ref([])
-
-const projectMembersMap = ref({
-  1: [
-    { id: 1, name: 'Ana', avatar: 'https://randomuser.me/api/portraits/women/1.jpg' },
-    { id: 2, name: 'Carlos', avatar: 'https://randomuser.me/api/portraits/men/2.jpg' },
-    { id: 3, name: 'Laura', avatar: 'https://randomuser.me/api/portraits/women/3.jpg' },
-    { id: 4, name: 'Pedro', avatar: 'https://randomuser.me/api/portraits/men/4.jpg' },
-    { id: 5, name: 'Maria', avatar: 'https://randomuser.me/api/portraits/women/5.jpg' }
-  ],
-  2: [
-    { id: 1, name: 'Ana', avatar: 'https://randomuser.me/api/portraits/women/1.jpg' },
-    { id: 2, name: 'Carlos', avatar: 'https://randomuser.me/api/portraits/men/2.jpg' }
-  ],
-  3: [
-    { id: 1, name: 'Ana', avatar: 'https://randomuser.me/api/portraits/women/1.jpg' },
-    { id: 2, name: 'Carlos', avatar: 'https://randomuser.me/api/portraits/men/2.jpg' },
-    { id: 3, name: 'Laura', avatar: 'https://randomuser.me/api/portraits/women/3.jpg' },
-    { id: 4, name: 'Pedro', avatar: 'https://randomuser.me/api/portraits/men/4.jpg' }
-  ]
-})
+const allUsers = ref([])
 
 const circumference = 2 * Math.PI * 54
 const circumferenceOffset = computed(() => {
@@ -87,17 +71,61 @@ const getPriorityFromTask = (priority) => {
   }
 }
 
+const formatGeneratedAt = (generatedAt) => {
+  if (!generatedAt) return 'just now'
+  const date = new Date(generatedAt)
+  if (Number.isNaN(date.getTime())) return generatedAt
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const loadAiDashboard = async () => {
+  try {
+    const dashboard = await getMemberAiDashboard()
+    const weeklySummary = dashboard?.weeklySummary || {}
+    const velocity = Number(weeklySummary.smartVelocity)
+
+    if (Number.isFinite(velocity)) {
+      smartVelocity.value = velocity
+    }
+
+    aiSummary.value = weeklySummary.summary || ''
+    delayWarning.value = weeklySummary.riskPrediction || ''
+    performanceSuggestions.value = Array.isArray(dashboard?.performanceSuggestions) && dashboard.performanceSuggestions.length > 0
+      ? dashboard.performanceSuggestions
+      : []
+    lastUpdated.value = formatGeneratedAt(weeklySummary.generatedAt)
+  } catch (error) {
+    console.error('Error loading AI member dashboard:', error.response?.data || error)
+    smartVelocity.value = null
+    aiSummary.value = ''
+    delayWarning.value = ''
+    performanceSuggestions.value = []
+    lastUpdated.value = 'Not generated yet'
+  }
+}
+
+const loadUsers = async () => {
+  try {
+    const response = await userService.getAllUsers()
+    allUsers.value = Array.isArray(response) ? response : response?.data || []
+  } catch (error) {
+    console.error('Error loading users:', error.response?.data || error)
+    allUsers.value = []
+  }
+}
+
 const loadUserProjects = async () => {
   try {
     const projects = await getProjectsByMember()
     myProjects.value = Array.isArray(projects) ? projects : []
   } catch (error) {
     console.error('Error loading user projects:', error)
-    myProjects.value = [
-      { projectId: 1, name: 'Clean Carpayo Beach', description: 'Lorem ipsum dolor sit amet consectetur adipiscing elit augue pretium erat.', status: 'IN_PROGRESS' },
-      { projectId: 2, name: 'Tree Planting', description: 'Planting 1000 trees in the urban area to improve air quality.', status: 'IN_PROGRESS' },
-      { projectId: 3, name: 'Recycling Programme', description: 'Implement recycling stations across the city.', status: 'PLANNED' }
-    ]
+    myProjects.value = []
   }
 }
 
@@ -136,40 +164,15 @@ const loadUserTasks = async () => {
       priority: getPriorityFromTask(task.priority)
     }))
 
-    const now = new Date()
-    lastUpdated.value = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`
-
   } catch (error) {
     console.error('Error loading user tasks:', error)
-    activeTasksCount.value = 12
-    upcomingDeadlinesCount.value = 4
-    completionPercentage.value = 85
-    upcomingTasks.value = [
-      {
-        id: 1,
-        title: 'Finalizing UI Assets',
-        description: 'Deliver high-res icons for the v2.4 mobile release.',
-        timeLeft: '2h left',
-        urgency: 'URGENT',
-        priority: 'HIGH'
-      },
-      {
-        id: 2,
-        title: 'Backend Integration',
-        description: 'Connect authentication module with new endpoints.',
-        timeLeft: 'Tomorrow',
-        urgency: 'NORMAL',
-        priority: 'HIGH'
-      },
-      {
-        id: 3,
-        title: 'User Testing Session',
-        description: 'Schedule and conduct usability testing with 5 users.',
-        timeLeft: 'Dec 22',
-        urgency: 'NORMAL',
-        priority: 'MEDIUM'
-      }
-    ]
+    myTasks.value = []
+    activeTasksCount.value = 0
+    upcomingDeadlinesCount.value = 0
+    completedTasksCount.value = 0
+    totalTasksCount.value = 0
+    completionPercentage.value = 0
+    upcomingTasks.value = []
   }
 }
 
@@ -204,11 +207,28 @@ const getProjectStatusText = (status) => {
 }
 
 const getProjectMembers = (project) => {
-  return projectMembersMap.value[project.projectId] || [
-    { id: 1, name: 'User 1', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
-    { id: 2, name: 'User 2', avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
-    { id: 3, name: 'User 3', avatar: 'https://randomuser.me/api/portraits/men/3.jpg' }
-  ]
+  const projectId = Number(project?.projectId)
+  if (!projectId) return []
+
+  return allUsers.value
+    .filter(user => {
+      const projectIds = Array.isArray(user.projectIds) ? user.projectIds.map(Number) : []
+      return projectIds.includes(projectId)
+    })
+    .map(user => ({
+      id: user.id,
+      name: `${user.name || ''} ${user.lastName || ''}`.trim() || user.email || 'Member',
+      avatar: user.imageUrl || ''
+    }))
+}
+
+const getMemberInitials = (member) => {
+  return (member.name || 'M')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
 }
 
 const getProjectProgress = (project) => {
@@ -240,6 +260,8 @@ onMounted(() => {
   window.addEventListener('storage', syncTheme)
   loadUserProjects()
   loadUserTasks()
+  loadAiDashboard()
+  loadUsers()
 })
 
 onBeforeUnmount(() => {
@@ -296,12 +318,11 @@ onBeforeUnmount(() => {
               <div class="smart-velocity">
                 <div class="velocity-label">SMART VELOCITY</div>
                 <div class="velocity-value">
-                  <span class="big-number">{{ smartVelocity.current }}</span>
-                  <span class="slash">/</span>
-                  <span class="small-number">{{ smartVelocity.max }}</span>
+                  <span class="big-number">{{ smartVelocity ?? 'N/A' }}</span>
                 </div>
               </div>
-              <div class="delay-warning">
+              <p class="ai-summary-text">{{ aiSummary || 'No AI summary available yet.' }}</p>
+              <div v-if="delayWarning" class="delay-warning">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 8V12M12 16H12.01M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12Z" stroke="#E24D4D" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
@@ -313,17 +334,13 @@ onBeforeUnmount(() => {
 
             <div class="ai-column right">
               <div class="suggestions-title">PERFORMANCE SUGGESTIONS</div>
-              <div class="suggestion-item">
+              <p v-if="performanceSuggestions.length === 0" class="empty-state">No performance suggestions available.</p>
+              <div v-for="(suggestion, index) in performanceSuggestions" :key="index" class="suggestion-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 6V12L16 14M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#999999" stroke-width="1.5" stroke-linecap="round"/>
+                  <path v-if="index % 2 === 0" d="M12 6V12L16 14M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#999999" stroke-width="1.5" stroke-linecap="round"/>
+                  <path v-else d="M8 2V5M16 2V5M3 8H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="#999999" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
-                <span>{{ suggestion1 }}</span>
-              </div>
-              <div class="suggestion-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 2V5M16 2V5M3 8H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="#999999" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <span>{{ suggestion2 }}</span>
+                <span>{{ suggestion }}</span>
               </div>
             </div>
           </div>
@@ -338,6 +355,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="deadlines-list">
+            <p v-if="upcomingTasks.length === 0" class="empty-state">No upcoming deadlines.</p>
             <div v-for="task in upcomingTasks" :key="task.id" class="deadline-item">
               <div class="deadline-main">
                 <div class="deadline-left">
@@ -364,6 +382,7 @@ onBeforeUnmount(() => {
     <div class="projects-section">
       <h2 class="section-title">Active Projects</h2>
       <div class="projects-grid">
+        <p v-if="myProjects.length === 0" class="empty-state projects-empty">No active projects.</p>
         <div v-for="project in myProjects" :key="project.projectId" class="project-card">
           <div class="project-header">
             <h4 class="project-name">{{ project.name }}</h4>
@@ -375,11 +394,15 @@ onBeforeUnmount(() => {
           <div class="project-footer">
             <div class="project-members">
               <div class="member-avatars">
-                <img v-for="(member, idx) in getProjectMembers(project).slice(0, 3)"
-                     :key="member.id"
-                     :src="member.avatar"
-                     class="member-avatar-small"
-                     :style="{ zIndex: 3 - idx }" />
+                <template v-for="(member, idx) in getProjectMembers(project).slice(0, 3)" :key="member.id">
+                  <img v-if="member.avatar"
+                       :src="member.avatar"
+                       class="member-avatar-small"
+                       :style="{ zIndex: 3 - idx }" />
+                  <div v-else class="member-avatar-small member-initials" :style="{ zIndex: 3 - idx }">
+                    {{ getMemberInitials(member) }}
+                  </div>
+                </template>
                 <div v-if="getProjectMembers(project).length > 3" class="extra-members">
                   +{{ getProjectMembers(project).length - 3 }}
                 </div>
@@ -575,7 +598,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .big-number {
@@ -593,6 +616,14 @@ onBeforeUnmount(() => {
   font-size: 20px;
   font-weight: 500;
   color: #999999;
+}
+
+.ai-summary-text {
+  font-size: 14px;
+  font-weight: 400;
+  color: #444444;
+  line-height: 1.45;
+  margin: 0 0 16px 0;
 }
 
 .delay-warning {
@@ -631,6 +662,14 @@ onBeforeUnmount(() => {
   font-weight: 400;
   color: #444444;
   line-height: 1.4;
+}
+
+.empty-state {
+  font-size: 14px;
+  font-weight: 400;
+  color: #777777;
+  line-height: 1.4;
+  margin: 0;
 }
 
 .deadlines-card {
@@ -859,6 +898,16 @@ onBeforeUnmount(() => {
   margin-left: 0;
 }
 
+.member-initials {
+  background: #FCEEEF;
+  color: #B70F4B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .extra-members {
   width: 28px;
   height: 28px;
@@ -891,6 +940,10 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 600;
   color: #B70F4B;
+}
+
+.projects-empty {
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 1200px) {
@@ -982,6 +1035,8 @@ onBeforeUnmount(() => {
 .dark-dashboard .project-description,
 .dark-dashboard .progress-label,
 .dark-dashboard .small-number,
+.dark-dashboard .ai-summary-text,
+.dark-dashboard .empty-state,
 .dark-dashboard .suggestion-item span {
   color: #a7b0bf;
 }
@@ -1070,6 +1125,11 @@ onBeforeUnmount(() => {
 }
 
 .dark-dashboard .extra-members {
+  background: rgba(244, 63, 115, 0.14);
+  color: #ff8cae;
+}
+
+.dark-dashboard .member-initials {
   background: rgba(244, 63, 115, 0.14);
   color: #ff8cae;
 }

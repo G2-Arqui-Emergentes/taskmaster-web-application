@@ -6,5 +6,8 @@ export const User = {
     lastName: "",
     imageUrl: "",
     salary: 0,
+    phone: "",
+    age: null,
+    bio: "",
     projectIds: []
 };

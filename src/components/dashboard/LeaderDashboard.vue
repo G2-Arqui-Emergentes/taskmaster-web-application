@@ -5,6 +5,7 @@ import { getProjectsByLeader } from '@/services/project.service.js'
 import { getTasksByProjectId } from '@/services/task.service.js'
 import { NotificationService } from '@/services/notification.service.js'
 import { UserService } from '@/services/user.service.js'
+import { getLeaderAiDashboard } from '@/services/ai-dashboard.service.js'
 
 const router = useRouter()
 const notificationService = new NotificationService()
@@ -16,37 +17,29 @@ const currentTheme = ref(document.documentElement.dataset.theme || localStorage.
 const isDarkTheme = computed(() => currentTheme.value === 'dark')
 const projects = ref([])
 const allTasks = ref([])
+const teamMembers = ref([])
+const generatedAt = ref('Not generated yet')
+const topRiskProject = ref(null)
+const recommendations = ref([])
 
 const stats = ref({
   activeProjects: 0,
   newProjectsThisMonth: 0,
   pendingTasks: 0,
   overdueTasks: 0,
-  avgTimePerTask: 4.2
+  avgTimePerTask: null,
+  highRiskProjects: 0
 })
 
 const riskData = ref({
-  probabilityOfDelay: 15,
-  overallEfficiency: 88
+  probabilityOfDelay: 0,
+  overallEfficiency: 0,
+  riskLevel: ''
 })
 
-const aiRecommendation = ref({
-  text: 'A bottleneck has been detected in "Project 1". Consider reassigning two QA tasks to avoid delays in the final deployment.'
-})
-
-const teamPerformance = ref([
-  { id: 1, name: 'Marcos Diaz', role: 'Tech Lead', avatar: 'https://randomuser.me/api/portraits/men/1.jpg', score: 94, performanceLabel: 'High Performance', performanceClass: 'high' },
-  { id: 2, name: 'Ana Valdez', role: 'UX Designer', avatar: 'https://randomuser.me/api/portraits/women/2.jpg', score: 82, performanceLabel: 'Stable Performance', performanceClass: 'stable' },
-  { id: 3, name: 'Roberto Gomez', role: 'Backend Developer', avatar: 'https://randomuser.me/api/portraits/men/3.jpg', score: 66, performanceLabel: 'Requires Review', performanceClass: 'low' }
-])
+const teamPerformance = ref([])
 
 const recentActivities = ref([])
-
-const activeMembers = ref([
-  { id: 1, name: 'Marcos Diaz', role: 'Tech Lead', avatar: 'https://randomuser.me/api/portraits/men/1.jpg', online: true },
-  { id: 2, name: 'Ana Valdez', role: 'UX Designer', avatar: 'https://randomuser.me/api/portraits/women/2.jpg', online: true },
-  { id: 3, name: 'Roberto Gomez', role: 'Backend Developer', avatar: 'https://randomuser.me/api/portraits/men/3.jpg', online: false }
-])
 
 const getNewProjectsThisMonth = () => {
   const now = new Date()
@@ -60,6 +53,89 @@ const getNewProjectsThisMonth = () => {
   }).length
 }
 
+const formatGeneratedAt = (value) => {
+  if (!value) return 'Not generated yet'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const getPerformanceClass = (level, score) => {
+  const normalized = String(level || '').toUpperCase()
+  if (normalized.includes('HIGH') || score >= 85) return 'high'
+  if (normalized.includes('LOW') || normalized.includes('RISK') || score < 70) return 'low'
+  return 'stable'
+}
+
+const getMemberInitials = (member) => {
+  return (member.name || 'M')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+}
+
+const getMemberById = (userId) => {
+  return teamMembers.value.find(member => Number(member.id) === Number(userId))
+}
+
+const loadLeaderAiDashboard = async () => {
+  try {
+    const dashboard = await getLeaderAiDashboard()
+    topRiskProject.value = dashboard?.topRiskProject || null
+    recommendations.value = Array.isArray(dashboard?.recommendations) ? dashboard.recommendations : []
+    generatedAt.value = formatGeneratedAt(dashboard?.generatedAt)
+
+    stats.value.activeProjects = Number.isFinite(Number(dashboard?.totalProjects))
+      ? Number(dashboard.totalProjects)
+      : stats.value.activeProjects
+    stats.value.highRiskProjects = Number.isFinite(Number(dashboard?.highRiskProjects))
+      ? Number(dashboard.highRiskProjects)
+      : 0
+
+    riskData.value = {
+      probabilityOfDelay: Number(topRiskProject.value?.delayRisk) || 0,
+      overallEfficiency: Number(topRiskProject.value?.overallEfficiency) || 0,
+      riskLevel: topRiskProject.value?.riskLevel || ''
+    }
+
+    teamPerformance.value = Array.isArray(dashboard?.memberPerformances)
+      ? dashboard.memberPerformances.map(member => {
+        const user = getMemberById(member.userId)
+        const score = Number(member.score) || 0
+        return {
+          id: member.userId,
+          name: member.userName || user?.name || 'Member',
+          avatar: user?.avatar || '',
+          score,
+          tasksCompleted: Number(member.tasksCompleted) || 0,
+          tasksDelayed: Number(member.tasksDelayed) || 0,
+          performanceLabel: member.performanceLevel || 'No performance level',
+          performanceClass: getPerformanceClass(member.performanceLevel, score)
+        }
+      })
+      : []
+  } catch (error) {
+    console.error('Error loading AI leader dashboard:', error.response?.data || error)
+    topRiskProject.value = null
+    recommendations.value = []
+    teamPerformance.value = []
+    generatedAt.value = 'Not generated yet'
+    stats.value.highRiskProjects = 0
+    riskData.value = {
+      probabilityOfDelay: 0,
+      overallEfficiency: 0,
+      riskLevel: ''
+    }
+  }
+}
+
 const loadProjects = async () => {
   try {
     const data = await getProjectsByLeader()
@@ -69,6 +145,29 @@ const loadProjects = async () => {
   } catch (error) {
     console.error('Error loading projects:', error)
     projects.value = []
+  }
+}
+
+const loadTeamMembers = async () => {
+  try {
+    const response = await userService.getAllUsers()
+    const users = Array.isArray(response) ? response : response?.data || []
+    const leaderProjectIds = new Set(projects.value.map(project => Number(project.projectId)))
+
+    teamMembers.value = users
+      .filter(user => {
+        const projectIds = Array.isArray(user.projectIds) ? user.projectIds.map(Number) : []
+        return projectIds.some(projectId => leaderProjectIds.has(projectId))
+      })
+      .map(user => ({
+        id: user.id,
+        name: `${user.name || ''} ${user.lastName || ''}`.trim() || user.email || 'Member',
+        email: user.email || '',
+        avatar: user.imageUrl || ''
+      }))
+  } catch (error) {
+    console.error('Error loading team members:', error.response?.data || error)
+    teamMembers.value = []
   }
 }
 
@@ -105,9 +204,10 @@ const loadAllTasks = async () => {
       return sum + days
     }, 0)
     stats.value.avgTimePerTask = (totalDays / completedTasks.length).toFixed(1)
+  } else {
+    stats.value.avgTimePerTask = null
   }
 }
-
 const loadNotifications = async () => {
   try {
     const notifications = await notificationService.getMyNotifications()
@@ -120,14 +220,7 @@ const loadNotifications = async () => {
     }))
   } catch (error) {
     console.error('Error loading notifications:', error)
-    // Actividades de ejemplo con los datos que pediste
-    recentActivities.value = [
-      { id: 1, icon: 'pi pi-user-plus', iconClass: 'icon-info', text: 'El usuario Valentino Sandoval se unió al proyecto Proyecto 1', time: '4 days ago' },
-      { id: 2, icon: 'pi pi-user-plus', iconClass: 'icon-info', text: 'El usuario Miembro Dos se unió al proyecto Proyecto 1', time: '4 days ago' },
-      { id: 3, icon: 'pi pi-user-plus', iconClass: 'icon-info', text: 'El usuario Miembro Dos se unió al proyecto Proyecto 2', time: '4 days ago' },
-      { id: 4, icon: 'pi pi-user-plus', iconClass: 'icon-info', text: 'El usuario Miembro Tres se unió al proyecto Proyecto 1', time: '3 days ago' },
-      { id: 5, icon: 'pi pi-user-plus', iconClass: 'icon-info', text: 'El usuario Valentino Sandoval se unió al proyecto Proyecto 2', time: '1 hour ago' }
-    ]
+    recentActivities.value = []
   }
 }
 
@@ -167,7 +260,9 @@ onMounted(async () => {
   window.addEventListener('theme-changed', syncTheme)
   window.addEventListener('storage', syncTheme)
   await loadProjects()
+  await loadTeamMembers()
   await loadAllTasks()
+  await loadLeaderAiDashboard()
   await loadNotifications()
 })
 
@@ -205,14 +300,14 @@ onBeforeUnmount(() => {
         <div class="kpi-label">OVERDUE TASKS</div>
         <div class="kpi-value-wrapper">
           <span class="kpi-value">{{ stats.overdueTasks }}</span>
-          <span class="kpi-badge red">Action required</span>
+          <span class="kpi-badge red">{{ stats.highRiskProjects }} high risk</span>
         </div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-label">AVERAGE COMPLETION TIME</div>
         <div class="kpi-value-wrapper">
-          <span class="kpi-value">{{ stats.avgTimePerTask }}d</span>
+          <span class="kpi-value">{{ stats.avgTimePerTask ?? 'N/A' }}<template v-if="stats.avgTimePerTask">d</template></span>
           <span class="kpi-suffix">per task</span>
         </div>
       </div>
@@ -236,7 +331,10 @@ onBeforeUnmount(() => {
               Download Report
             </button>
           </div>
-          <p class="card-description">Analysis of completed versus delayed tasks</p>
+          <p class="card-description">
+            <span v-if="topRiskProject">Top risk: {{ topRiskProject.name }} ({{ topRiskProject.status }})</span>
+            <span v-else>No AI risk assessment available yet.</span>
+          </p>
 
           <div class="metrics-row">
             <div class="metric">
@@ -258,8 +356,12 @@ onBeforeUnmount(() => {
           <div class="ai-recommendation">
             <i class="pi pi-microchip-ai"></i>
             <div class="recommendation-content">
-              <div class="recommendation-title">AI Recommendation</div>
-              <p class="recommendation-text">{{ aiRecommendation.text }}</p>
+              <div class="recommendation-title">AI Recommendations</div>
+              <p class="recommendation-meta">Last generated: {{ generatedAt }}</p>
+              <p v-if="recommendations.length === 0" class="recommendation-text">No AI recommendations available.</p>
+              <ul v-else class="recommendations-list">
+                <li v-for="(recommendation, index) in recommendations" :key="index">{{ recommendation }}</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -271,11 +373,13 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="members-list">
+            <p v-if="teamPerformance.length === 0" class="empty-state">No member performance data available.</p>
             <div v-for="member in teamPerformance" :key="member.id" class="member-row">
-              <img :src="member.avatar" class="member-avatar" />
+              <img v-if="member.avatar" :src="member.avatar" class="member-avatar" />
+              <div v-else class="member-avatar member-initials">{{ getMemberInitials(member) }}</div>
               <div class="member-info">
                 <div class="member-name">{{ member.name }}</div>
-                <div class="member-role">{{ member.role }}</div>
+                <div class="member-role">{{ member.tasksCompleted }} completed, {{ member.tasksDelayed }} delayed</div>
                 <div class="member-performance" :class="member.performanceClass">
                   {{ member.performanceLabel }} ({{ member.score }}%)
                 </div>
@@ -296,6 +400,7 @@ onBeforeUnmount(() => {
           <h3>Recent Activities</h3>
         </div>
         <div class="activities-grid">
+          <p v-if="recentActivities.length === 0" class="empty-state activities-empty">No recent activities.</p>
           <div v-for="activity in recentActivities.slice(0, 4)" :key="activity.id" class="activity-item">
             <div class="activity-icon" :class="activity.iconClass">
               <i :class="activity.icon"></i>
@@ -310,17 +415,18 @@ onBeforeUnmount(() => {
 
       <div class="section-card team-card">
         <div class="team-header">
-          <h3>Active Team</h3>
-          <div class="live-badge">{{ activeMembers.length }} LIVE</div>
+          <h3>Team Members</h3>
+          <div class="live-badge">{{ teamMembers.length }} MEMBERS</div>
           <button class="see-all-btn" @click="goToTeam">See all →</button>
         </div>
         <div class="active-members-list">
-          <div v-for="member in activeMembers" :key="member.id" class="active-member-row">
-            <div class="online-indicator"></div>
-            <img :src="member.avatar" class="member-avatar-small" />
+          <p v-if="teamMembers.length === 0" class="empty-state">No team members found.</p>
+          <div v-for="member in teamMembers.slice(0, 5)" :key="member.id" class="active-member-row">
+            <img v-if="member.avatar" :src="member.avatar" class="member-avatar-small" />
+            <div v-else class="member-avatar-small member-initials">{{ getMemberInitials(member) }}</div>
             <div class="member-details">
               <div class="member-name">{{ member.name }}</div>
-              <div class="member-role">{{ member.role }}</div>
+              <div class="member-role">{{ member.email || 'No email' }}</div>
             </div>
             <button class="message-icon-btn">
               <i class="pi pi-comment"></i>
@@ -618,6 +724,24 @@ onBeforeUnmount(() => {
   line-height: 1.5;
 }
 
+.recommendation-meta {
+  font-size: 11px;
+  color: #6B7280;
+  margin: 0 0 8px 0;
+}
+
+.recommendations-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #4B5563;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.recommendations-list li {
+  margin-bottom: 6px;
+}
+
 .performance-header {
   margin-bottom: 20px;
 }
@@ -640,6 +764,13 @@ onBeforeUnmount(() => {
   gap: 16px;
 }
 
+.empty-state {
+  color: #6B7280;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+}
+
 .member-row {
   display: flex;
   align-items: center;
@@ -659,6 +790,15 @@ onBeforeUnmount(() => {
   height: 48px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.member-initials {
+  background: #FCEEEF;
+  color: #B70F4B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
 }
 
 .member-info {
@@ -784,6 +924,10 @@ onBeforeUnmount(() => {
 .activity-time {
   font-size: 11px;
   color: #9CA3AF;
+}
+
+.activities-empty {
+  grid-column: 1 / -1;
 }
 
 /* Team Card */
@@ -968,10 +1112,13 @@ onBeforeUnmount(() => {
 .dark-dashboard .kpi-suffix,
 .dark-dashboard .card-description,
 .dark-dashboard .recommendation-text,
+.dark-dashboard .recommendation-meta,
+.dark-dashboard .recommendations-list,
 .dark-dashboard .performance-sub,
 .dark-dashboard .member-role,
 .dark-dashboard .member-details .member-role,
 .dark-dashboard .activity-time,
+.dark-dashboard .empty-state,
 .dark-dashboard .metric-label {
   color: #a7b0bf;
 }
@@ -1020,6 +1167,11 @@ onBeforeUnmount(() => {
 
 .dark-dashboard .online-indicator {
   border-color: #10141d;
+}
+
+.dark-dashboard .member-initials {
+  background: rgba(244, 63, 115, 0.14);
+  color: #ff8cae;
 }
 
 .dark-dashboard .message-icon-btn:hover {

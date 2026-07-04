@@ -2,7 +2,11 @@
 export default {
   name: 'ChangePasswordModal',
   props: {
-    visible: Boolean
+    visible: Boolean,
+    submitting: {
+      type: Boolean,
+      default: false
+    }
   },
   emits: ['update:visible', 'changePassword'],
   data() {
@@ -19,10 +23,17 @@ export default {
       return document.documentElement.dataset.theme === 'dark';
     }
   },
+  watch: {
+    visible(value) {
+      if (!value) {
+        this.resetForm();
+      }
+    }
+  },
   methods: {
     close() {
+      if (this.submitting) return;
       this.$emit('update:visible', false);
-      this.resetForm();
     },
     resetForm() {
       this.form = { current: '', new: '', confirm: '' };
@@ -40,7 +51,6 @@ export default {
         current: this.form.current,
         new: this.form.new
       });
-      this.close();
     }
   }
 };
@@ -72,8 +82,10 @@ export default {
       </div>
 
       <div class="modal-footer">
-        <button class="btn-cancel" @click="close">Cancel</button>
-        <button class="btn-save" @click="submit">Update Password</button>
+        <button class="btn-cancel" :disabled="submitting" @click="close">Cancel</button>
+        <button class="btn-save" :disabled="submitting" @click="submit">
+          {{ submitting ? 'Updating...' : 'Update Password' }}
+        </button>
       </div>
     </div>
   </div>
@@ -196,6 +208,12 @@ export default {
 
 .btn-save:hover {
   background: #8f0028;
+}
+
+.btn-cancel:disabled,
+.btn-save:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .modal-box.dark-modal {

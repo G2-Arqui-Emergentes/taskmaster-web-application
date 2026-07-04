@@ -114,13 +114,31 @@ export class UserService {
             name: (user.name ?? "").toString().trim(),
             lastName: (user.lastName ?? "").toString().trim(),
             imageUrl: (user.imageUrl ?? "").toString().trim(),
-            salary: user.salary ?? 0
+            salary: user.salary ?? 0,
+            phone: (user.phone ?? "").toString().trim(),
+            age: user.age ?? null,
+            bio: (user.bio ?? "").toString().trim()
         };
 
         try {
             const resp = await this.http.put(`/api/v1/users`, userbody, { headers });
             this.setUser(resp.data);
             return resp.data;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async changePassword(currentPassword, newPassword) {
+        const headers = this.getHeadersAuthorization();
+        const payload = {
+            currentPassword: (currentPassword ?? "").toString(),
+            newPassword: (newPassword ?? "").toString()
+        };
+
+        try {
+            const response = await this.http.post('/api/v1/users/change-password', payload, { headers });
+            return response.data;
         } catch (error) {
             throw error;
         }
