@@ -12,7 +12,7 @@ export class ChatbotService {
 
     async sendMessage(message) {
         const headers = this.userService.getHeadersAuthorization();
-        const response = await this.http.post("/api/v1/chatbot/message", {
+        const response = await this.http.post("/api/v1/ai/chatbot/message", {
             message: (message ?? "").toString().trim()
         }, { headers });
 
