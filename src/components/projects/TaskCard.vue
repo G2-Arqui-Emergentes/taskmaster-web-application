@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue"
+import { useI18n } from "vue-i18n"
 import { deleteTask, updateTask } from "@/services/task.service.js"
 import { useToast } from "primevue/usetoast"
 import EditTaskModal from "./modals/EditTaskModal.vue"
@@ -21,6 +22,7 @@ const props = defineProps({
 })
 
 const toast = useToast()
+const { t, locale } = useI18n()
 const emits = defineEmits(["taskDel", "taskMoved", "openMenu", "closeMenu"])
 
 const showEditModal = ref(false)
@@ -37,13 +39,13 @@ watch(() => props.activeMenuId, (newVal) => {
 
 const displayAssignee = computed(() => {
   const found = props.teamMembers.find((m) => m.id === props.assignedID)
-  return found?.name || props.assigned || "Unassigned"
+  return found?.name || props.assigned || t('projects.unassigned')
 })
 
 const formattedDueDate = computed(() => {
-  if (!props.due) return "No date"
+  if (!props.due) return t('projects.noDate')
   const date = new Date(props.due)
-  return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' })
+  return date.toLocaleDateString(locale.value === 'es' ? 'es-ES' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })
 })
 
 const getNewStateFromCheckbox = (currentState, isChecked) => {
@@ -118,12 +120,21 @@ const handleCheckboxChange = async (event) => {
     }
     await updateTask(props.id, payload)
     emits("taskMoved", { ...props, state: newState })
-    toast.add({ severity: 'success', summary: 'Success', detail: `Task moved to ${newState}`, life: 2000 })
+    toast.add({ severity: 'success', summary: t('projects.toast.success'), detail: t('projects.toast.taskMoved', { state: getStateLabel(newState) }), life: 2000 })
   } catch (error) {
     console.error('Error updating task status:', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not update task status', life: 3000 })
+    toast.add({ severity: 'error', summary: t('projects.toast.error'), detail: t('projects.toast.couldNotUpdateTaskStatus'), life: 3000 })
   } finally {
     isUpdating.value = false
+  }
+}
+
+const getStateLabel = (state) => {
+  switch (state) {
+    case 'To-Do': return t('projects.status.toDo')
+    case 'In progress': return t('projects.status.inProgress')
+    case 'Done': return t('projects.status.done')
+    default: return state
   }
 }
 
@@ -167,17 +178,17 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
       <div class="task-actions">
         <div v-if="isLeader" class="menu-container" ref="menuContainer">
-          <button class="menu-btn" @click="toggleMenu" aria-label="Task options">
+          <button class="menu-btn" @click="toggleMenu" :aria-label="$t('projects.taskOptions')">
             <i class="pi pi-ellipsis-h"></i>
           </button>
           <div v-if="isMenuOpen" class="dropdown-menu">
             <button class="dropdown-item edit" @click="openEditModal">
               <i class="pi pi-pencil"></i>
-              Edit
+              {{ $t('projects.edit') }}
             </button>
             <button class="dropdown-item delete" @click="openDeleteModal">
               <i class="pi pi-trash"></i>
-              Delete
+              {{ $t('projects.delete') }}
             </button>
           </div>
         </div>

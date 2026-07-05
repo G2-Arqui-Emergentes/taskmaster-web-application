@@ -6,5 +6,54 @@
   "wed": "Mie",
   "thu": "Jue",
   "fri": "Vie",
-  "sat": "Sab"
+  "sat": "Sab",
+  "wk": "Sem",
+  "subtitle": "Gestiona los vencimientos de tus tareas",
+  "tasksFor": "Tareas para {date}",
+  "due": "Vence: {date}",
+  "project": "Proyecto",
+  "assignedTo": "Asignado a",
+  "selecteddate": "Fecha seleccionada",
+  "quickinformation": "Informaci\u00f3n r\u00e1pida",
+  "notasksscheduled": "No hay tareas programadas para esta fecha",
+  "nodescription": "Sin descripci\u00f3n",
+  "nodate": "Sin fecha",
+  "unknown": "Desconocido",
+  "unassigned": "Sin asignar",
+  "projectWithId": "Proyecto {id}",
+  "userWithId": "Usuario {id}",
+  "status": {
+    "todo": "Por hacer",
+    "inprogress": "En progreso",
+    "done": "Hecho"
+  },
+  "months": {
+    "january": "Enero",
+    "february": "Febrero",
+    "march": "Marzo",
+    "april": "Abril",
+    "may": "Mayo",
+    "june": "Junio",
+    "july": "Julio",
+    "august": "Agosto",
+    "september": "Septiembre",
+    "october": "Octubre",
+    "november": "Noviembre",
+    "december": "Diciembre"
+  },
+  "days": {
+    "sunday": "Domingo",
+    "monday": "Lunes",
+    "tuesday": "Martes",
+    "wednesday": "Mi\u00e9rcoles",
+    "thursday": "Jueves",
+    "friday": "Viernes",
+    "saturday": "S\u00e1bado"
+  },
+  "info": {
+    "viewtasks": "Puedes ver tareas directamente en el calendario",
+    "reddots": "Los puntos rojos indican fechas con vencimientos de tareas",
+    "navigate": "Navega entre fechas para ver tareas pendientes",
+    "clickdate": "Haz clic en cualquier fecha para ver las tareas que vencen ese d\u00eda"
+  }
 }

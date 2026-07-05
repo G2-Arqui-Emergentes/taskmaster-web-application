@@ -1,1 +1,18 @@
-{}
+{
+  "user": "User",
+  "roles": {
+    "leader": "Leader",
+    "member": "Member",
+    "admin": "Admin"
+  },
+  "notifications": {
+    "label": "Notifications",
+    "empty": "No notifications yet",
+    "seeAll": "See all notifications",
+    "tabs": {
+      "all": "All",
+      "tasks": "Tasks",
+      "projects": "Projects"
+    }
+  }
+}

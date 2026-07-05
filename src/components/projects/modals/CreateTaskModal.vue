@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Calendar from 'primevue/calendar'
 import { createTask as createTaskApi } from '@/services/task.service.js'
 import { useToast } from 'primevue/usetoast'
@@ -12,6 +13,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'taskCreated'])
 const toast = useToast()
+const { t } = useI18n()
 
 const defaultAvatar = 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg'
 
@@ -29,11 +31,11 @@ const priorityDropdownOpen = ref(false)
 const memberDropdownOpen = ref(false)
 const titleInput = ref(null)
 
-const priorityOptions = [
-  { label: 'HIGH', value: 'HIGH' },
-  { label: 'MEDIUM', value: 'MEDIUM' },
-  { label: 'LOW', value: 'LOW' }
-]
+const priorityOptions = computed(() => [
+  { label: t('projects.priority.high'), value: 'HIGH' },
+  { label: t('projects.priority.medium'), value: 'MEDIUM' },
+  { label: t('projects.priority.low'), value: 'LOW' }
+])
 
 const selectedMember = computed(() => {
   if (!form.value.assignedID) return null
@@ -41,8 +43,8 @@ const selectedMember = computed(() => {
 })
 
 const getPriorityLabel = (value) => {
-  const option = priorityOptions.find(o => o.value === value)
-  return option ? option.label : 'Select priority'
+  const option = priorityOptions.value.find(o => o.value === value)
+  return option ? option.label : t('projects.selectPriority')
 }
 
 const togglePriorityDropdown = () => {
@@ -73,13 +75,13 @@ const closeDropdowns = () => {
 const validateForm = () => {
   errors.value = []
   if (!form.value.title.trim()) {
-    errors.value.push('Title is required')
+    errors.value.push(t('projects.validation.titleRequired'))
   }
   if (!form.value.assignedID) {
-    errors.value.push('Please select a team member')
+    errors.value.push(t('projects.validation.teamMemberRequired'))
   }
   if (!form.value.endDate) {
-    errors.value.push('End date is required')
+    errors.value.push(t('projects.validation.endDateRequired'))
   }
   return errors.value.length === 0
 }
@@ -100,14 +102,14 @@ const createTask = async () => {
       assignedUserIds: [form.value.assignedID]
     }
     await createTaskApi(payload)
-    toast.add({ severity: 'success', summary: 'Success', detail: 'Task created successfully', life: 3000 })
+    toast.add({ severity: 'success', summary: t('projects.toast.success'), detail: t('projects.toast.taskCreated'), life: 3000 })
     resetForm()
     emit('taskCreated')
     close()
   } catch (error) {
     console.error('Error creating task:', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not create task', life: 3000 })
-    errors.value = ['Error creating task. Please try again.']
+    toast.add({ severity: 'error', summary: t('projects.toast.error'), detail: t('projects.toast.couldNotCreateTask'), life: 3000 })
+    errors.value = [t('projects.validation.createTaskError')]
   } finally {
     loading.value = false
   }
@@ -177,42 +179,42 @@ watch(() => props.visible, (val) => {
   <div v-if="visible" class="modal-overlay" @click.self="close">
     <div class="modal-box">
       <div class="modal-header">
-        <h2 class="modal-title">Create New Task</h2>
+        <h2 class="modal-title">{{ $t('projects.createNewTask') }}</h2>
         <button class="modal-close" @click="close"><i class="pi pi-times"></i></button>
       </div>
 
       <div class="modal-body">
         <div v-if="errors.length" class="error-list">
-          <b>Please correct the following error(s):</b>
+          <b>{{ $t('projects.validation.correctErrors') }}</b>
           <ul>
             <li v-for="error in errors" :key="error">{{ error }}</li>
           </ul>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Name <span class="required">*</span></label>
+          <label class="form-label">{{ $t('projects.name') }} <span class="required">*</span></label>
           <input
               type="text"
               ref="titleInput"
               class="form-input"
               v-model="form.title"
-              placeholder="Enter task name"
+              :placeholder="$t('projects.enterTaskName')"
           />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Description</label>
+          <label class="form-label">{{ $t('projects.description') }}</label>
           <textarea
               class="form-input textarea"
               v-model="form.description"
               rows="3"
-              placeholder="Describe your task..."
+              :placeholder="$t('projects.describeTask')"
           ></textarea>
         </div>
 
         <div class="form-row">
           <div class="form-group half">
-            <label class="form-label">Priority <span class="required">*</span></label>
+            <label class="form-label">{{ $t('projects.priorityLabel') }} <span class="required">*</span></label>
             <div class="custom-select" @click="togglePriorityDropdown">
               <div class="select-trigger">
                 <span>{{ getPriorityLabel(form.priority) }}</span>
@@ -234,14 +236,14 @@ watch(() => props.visible, (val) => {
           </div>
 
           <div class="form-group half">
-            <label class="form-label">End Date <span class="required">*</span></label>
+            <label class="form-label">{{ $t('projects.endDate') }} <span class="required">*</span></label>
             <div class="custom-date-wrapper">
               <Calendar
                   v-model="form.endDate"
                   class="form-input calendar-input"
                   showIcon
                   dateFormat="yy-mm-dd"
-                  placeholder="Select end date"
+                  :placeholder="$t('projects.selectEndDate')"
                   :appendTo="'self'"
               />
             </div>
@@ -249,14 +251,14 @@ watch(() => props.visible, (val) => {
         </div>
 
         <div class="form-group half-width">
-          <label class="form-label">Assigned To <span class="required">*</span></label>
+          <label class="form-label">{{ $t('projects.assignedTo') }} <span class="required">*</span></label>
           <div class="custom-select" @click="toggleMemberDropdown">
             <div class="select-trigger">
               <div class="selected-member" v-if="selectedMember">
                 <img :src="selectedMember.imageUrl || defaultAvatar" class="member-avatar-small" />
                 <span>{{ selectedMember.name }}</span>
               </div>
-              <span v-else>Select team member</span>
+              <span v-else>{{ $t('projects.selectTeamMember') }}</span>
               <i class="pi pi-chevron-down" :class="{ rotated: memberDropdownOpen }"></i>
             </div>
             <div v-if="memberDropdownOpen" class="select-dropdown members-dropdown">
@@ -272,7 +274,7 @@ watch(() => props.visible, (val) => {
                 <i v-if="form.assignedID === member.id" class="pi pi-check"></i>
               </div>
               <div v-if="teamMembers.length === 0" class="select-option empty">
-                <span>No team members available</span>
+                <span>{{ $t('projects.noTeamMembersAvailable') }}</span>
               </div>
             </div>
           </div>
@@ -282,7 +284,7 @@ watch(() => props.visible, (val) => {
       <div class="modal-footer">
         <button type="button" class="btn-create" @click="createTask" :disabled="loading">
           <i v-if="loading" class="pi pi-spin pi-spinner"></i>
-          <span v-else>Create</span>
+          <span v-else>{{ $t('projects.create') }}</span>
         </button>
       </div>
     </div>

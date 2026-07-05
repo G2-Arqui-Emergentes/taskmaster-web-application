@@ -31,16 +31,16 @@ export default {
     },
     roleLabel() {
       const roles = this.user?.roles || [];
-      if (roles.includes('ROLE_LEADER')) return 'Leader';
-      if (roles.includes('ROLE_MEMBER')) return 'Member';
-      if (roles.includes('ROLE_ADMIN')) return 'Admin';
+      if (roles.includes('ROLE_LEADER')) return this.$t('toolbar.roles.leader');
+      if (roles.includes('ROLE_MEMBER')) return this.$t('toolbar.roles.member');
+      if (roles.includes('ROLE_ADMIN')) return this.$t('toolbar.roles.admin');
       return '';
     },
     userAvatar() {
       return this.user.imageUrl || this.user.profileImg || 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
     },
     userName() {
-      return this.user.name || this.user.email?.split('@')[0] || 'User';
+      return this.user.name || this.user.email?.split('@')[0] || this.$t('toolbar.user');
     },
     logoStyle() {
       return {
@@ -51,9 +51,9 @@ export default {
     },
     notificationTabs() {
       return [
-        { key: 'all', label: 'All', count: this.notifications.length },
-        { key: 'tasks', label: 'Tasks', count: this.taskNotifications.length },
-        { key: 'projects', label: 'Projects', count: this.projectNotifications.length }
+        { key: 'all', label: this.$t('toolbar.notifications.tabs.all'), count: this.notifications.length },
+        { key: 'tasks', label: this.$t('toolbar.notifications.tabs.tasks'), count: this.taskNotifications.length },
+        { key: 'projects', label: this.$t('toolbar.notifications.tabs.projects'), count: this.projectNotifications.length }
       ];
     },
     taskNotifications() {
@@ -271,7 +271,7 @@ export default {
           <button
               type="button"
               class="notification-button"
-              aria-label="Notifications"
+              :aria-label="$t('toolbar.notifications.label')"
               @click="toggleNotificationPanel"
           >
             <i class="pi pi-bell"></i>
@@ -280,7 +280,7 @@ export default {
 
           <div v-if="notificationPanelOpen" class="notifications-panel">
             <div class="notifications-header">
-              <h3>Notifications</h3>
+              <h3>{{ $t('toolbar.notifications.label') }}</h3>
             </div>
 
             <div class="notification-tabs">
@@ -323,12 +323,12 @@ export default {
               </div>
 
               <div v-if="!visibleNotifications.length" class="notifications-empty">
-                No notifications yet
+                {{ $t('toolbar.notifications.empty') }}
               </div>
             </div>
 
             <button type="button" class="see-all-notifications" @click="navigateToNotifications">
-              Ver todas las notificaciones
+              {{ $t('toolbar.notifications.seeAll') }}
               <i class="pi pi-arrow-right"></i>
             </button>
           </div>

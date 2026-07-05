@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   tasksData: {
@@ -28,7 +31,7 @@ const taskStatusCounts = computed(() => {
 const chartData = computed(() => {
   const isDark = document.documentElement.dataset.theme === 'dark'
   return {
-    labels: ['To-Do', 'In Progress', 'Done'],
+    labels: [t('analytics.todo'), t('analytics.inprogress'), t('analytics.done')],
     datasets: [{
       data: [taskStatusCounts.value.todo, taskStatusCounts.value.inProgress, taskStatusCounts.value.done],
       backgroundColor: isDark ? ['#ff6f99', '#f59e0b', '#34d399'] : ['#fecaca', '#fed7aa', '#dcfce7'],
@@ -72,7 +75,7 @@ const chartOptions = computed(() => {
         class="flex w-full h-12rem"
     />
     <div v-else class="flex w-full justify-content-center align-items-center">
-      <p class="text-gray-500">No tasks created yet</p>
+      <p class="text-gray-500">{{ $t('analytics.notaskscreated') }}</p>
     </div>
   </div>
 </template>

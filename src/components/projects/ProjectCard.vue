@@ -62,22 +62,22 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
       <button type="button" class="img-but" @click="openTodo">
         <img
             :src="project.imageUrl || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'"
-            alt="Project Image"
+            :alt="$t('projects.projectImage')"
             class="project-image"
         />
       </button>
       <div v-if="isLeader" class="menu-container" ref="menuContainer">
-        <button class="menu-btn" @click="toggleMenu" aria-label="Project options">
+        <button class="menu-btn" @click="toggleMenu" :aria-label="$t('projects.projectOptions')">
           <i class="pi pi-ellipsis-h"></i>
         </button>
         <div v-if="isMenuOpen" class="dropdown-menu">
           <button class="dropdown-item delete" @click="handleDelete">
             <i class="pi pi-trash"></i>
-            Delete
+            {{ $t('projects.delete') }}
           </button>
           <button class="dropdown-item edit" @click="handleEdit">
             <i class="pi pi-pencil"></i>
-            Edit
+            {{ $t('projects.edit') }}
           </button>
         </div>
       </div>

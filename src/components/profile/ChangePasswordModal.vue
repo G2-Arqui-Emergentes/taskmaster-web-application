@@ -40,11 +40,11 @@ export default {
     },
     submit() {
       if (this.form.new !== this.form.confirm) {
-        alert('New password and confirmation do not match');
+        alert(this.$t('profile.passwordMismatch'));
         return;
       }
       if (this.form.new.length < 6) {
-        alert('Password must be at least 6 characters');
+        alert(this.$t('profile.passwordMinLength'));
         return;
       }
       this.$emit('changePassword', {
@@ -60,31 +60,31 @@ export default {
   <div v-if="visible" class="modal-overlay" @click.self="close">
     <div class="modal-box" :class="{ 'dark-modal': isDarkTheme }">
       <div class="modal-header">
-        <h2 class="modal-title">Change Password</h2>
+        <h2 class="modal-title">{{ $t('profile.changePassword') }}</h2>
         <button class="modal-close" @click="close"><i class="pi pi-times"></i></button>
       </div>
 
       <div class="modal-body">
         <div class="edit-form">
           <div class="form-group">
-            <label>Current Password</label>
-            <input type="password" v-model="form.current" placeholder="Enter current password" />
+            <label>{{ $t('profile.currentPassword') }}</label>
+            <input type="password" v-model="form.current" :placeholder="$t('profile.enterCurrentPassword')" />
           </div>
           <div class="form-group">
-            <label>New Password</label>
-            <input type="password" v-model="form.new" placeholder="Enter new password" />
+            <label>{{ $t('profile.newPassword') }}</label>
+            <input type="password" v-model="form.new" :placeholder="$t('profile.enterNewPassword')" />
           </div>
           <div class="form-group">
-            <label>Confirm Password</label>
-            <input type="password" v-model="form.confirm" placeholder="Confirm new password" />
+            <label>{{ $t('profile.confirmPassword') }}</label>
+            <input type="password" v-model="form.confirm" :placeholder="$t('profile.confirmNewPassword')" />
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn-cancel" :disabled="submitting" @click="close">Cancel</button>
+        <button class="btn-cancel" :disabled="submitting" @click="close">{{ $t('profile.cancel') }}</button>
         <button class="btn-save" :disabled="submitting" @click="submit">
-          {{ submitting ? 'Updating...' : 'Update Password' }}
+          {{ submitting ? $t('profile.updating') : $t('profile.updatePassword') }}
         </button>
       </div>
     </div>

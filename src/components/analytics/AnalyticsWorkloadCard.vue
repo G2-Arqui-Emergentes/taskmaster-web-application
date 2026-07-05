@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   workloadData: {
@@ -16,7 +19,7 @@ const chartData = computed(() => {
   return {
     labels: props.workloadData.labels,
     datasets: [{
-      label: 'Tasks Assigned',
+      label: t('analytics.tasksassigned'),
       backgroundColor: '#b22222',
       borderColor: '#b22222',
       data: props.workloadData.data
@@ -40,7 +43,7 @@ const chartOptions = computed(() => {
       },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.raw} tasks`
+          label: (context) => t('analytics.taskscount', { count: context.raw })
         }
       }
     },
@@ -50,7 +53,7 @@ const chartOptions = computed(() => {
         grid: { display: false, drawBorder: false },
         title: {
           display: true,
-          text: 'Number of Tasks',
+          text: t('analytics.numberoftasks'),
           color: textColorSecondary
         }
       },
@@ -73,7 +76,7 @@ const chartOptions = computed(() => {
         class="h-12rem w-full"
     />
     <div v-else class="flex w-full justify-content-center align-items-center">
-      <p class="text-gray-500">No team members assigned</p>
+      <p class="text-gray-500">{{ $t('analytics.noteammembersassigned') }}</p>
     </div>
   </div>
 </template>

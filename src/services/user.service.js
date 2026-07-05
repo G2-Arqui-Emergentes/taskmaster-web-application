@@ -107,6 +107,15 @@ export class UserService {
         }
     }
 
+    async getMe() {
+        const headers = this.getHeadersAuthorization();
+        try {
+            return await this.http.get('/api/v1/users/me', { headers });
+        } catch (error) {
+            throw error;
+        }
+    }
+
     async updateUser(user) {
         const headers = this.getHeadersAuthorization();
 

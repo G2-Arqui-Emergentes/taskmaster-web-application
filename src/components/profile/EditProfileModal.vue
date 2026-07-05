@@ -58,46 +58,46 @@ export default {
   <div v-if="visible" class="modal-overlay" @click.self="close">
     <div class="modal-box" :class="{ 'dark-modal': isDarkTheme }">
       <div class="modal-header">
-        <h2 class="modal-title">Edit Profile</h2>
+        <h2 class="modal-title">{{ $t('profile.editProfile') }}</h2>
         <button class="modal-close" @click="close"><i class="pi pi-times"></i></button>
       </div>
 
       <div class="modal-body">
         <div class="edit-form">
           <div class="form-group">
-            <label>Name</label>
-            <input type="text" v-model="form.name" placeholder="Name" />
+            <label>{{ $t('profile.name') }}</label>
+            <input type="text" v-model="form.name" :placeholder="$t('profile.name')" />
           </div>
           <div class="form-group">
-            <label>Last Name</label>
-            <input type="text" v-model="form.lastName" placeholder="Last Name" />
+            <label>{{ $t('profile.lastName') }}</label>
+            <input type="text" v-model="form.lastName" :placeholder="$t('profile.lastName')" />
           </div>
           <div class="form-group">
-            <label>Email</label>
+            <label>{{ $t('profile.email') }}</label>
             <input type="email" v-model="form.email" disabled class="disabled-input" />
           </div>
           <div class="form-group">
-            <label>Salary</label>
-            <input type="number" v-model.number="form.salary" placeholder="Salary" min="0" />
+            <label>{{ $t('profile.salary') }}</label>
+            <input type="number" v-model.number="form.salary" :placeholder="$t('profile.salary')" min="0" />
           </div>
           <div class="form-group">
-            <label>Phone</label>
-            <input type="tel" v-model="form.phone" placeholder="Phone" />
+            <label>{{ $t('profile.phone') }}</label>
+            <input type="tel" v-model="form.phone" :placeholder="$t('profile.phone')" />
           </div>
           <div class="form-group">
-            <label>Age</label>
-            <input type="number" v-model.number="form.age" placeholder="Age" min="0" />
+            <label>{{ $t('profile.age') }}</label>
+            <input type="number" v-model.number="form.age" :placeholder="$t('profile.age')" min="0" />
           </div>
           <div class="form-group">
-            <label>Bio</label>
-            <textarea v-model="form.bio" placeholder="Bio" rows="4"></textarea>
+            <label>{{ $t('profile.bio') }}</label>
+            <textarea v-model="form.bio" :placeholder="$t('profile.bio')" rows="4"></textarea>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn-cancel" @click="close">Cancel</button>
-        <button class="btn-save" @click="save">Save Changes</button>
+        <button class="btn-cancel" @click="close">{{ $t('profile.cancel') }}</button>
+        <button class="btn-save" @click="save">{{ $t('profile.saveChanges') }}</button>
       </div>
     </div>
   </div>

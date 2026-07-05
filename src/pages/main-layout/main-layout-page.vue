@@ -2,10 +2,11 @@
 import Home from "@/pages/home.component.vue";
 import Toolbar from "@/public/toolbar.component.vue";
 import Sidebar from "@/public/sidebar.component.vue";
+import AresChatbot from "@/components/chatbot/AresChatbot.vue";
 
 export default {
   name: "main-layout-page",
-  components: { Home, Toolbar, Sidebar },
+  components: { Home, Toolbar, Sidebar, AresChatbot },
   data() {
     return {
       sidebarVisible: false,
@@ -54,6 +55,7 @@ export default {
       <main class="main-container" :class="{ 'main-blur': sidebarVisible && windowWidth <= 1023 }">
         <router-view></router-view>
       </main>
+      <AresChatbot />
     </div>
   </div>
 </template>

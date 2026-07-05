@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { UserService } from '@/services/user.service.js';
 
 const props = defineProps({
@@ -7,6 +8,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['click']);
+const { t } = useI18n();
 
 const projectLeader = ref('');
 
@@ -29,7 +31,7 @@ const loadProjectLeader = async () => {
       }
     } catch (error) {
       console.error('Error loading project leader:', error);
-      projectLeader.value = 'Unknown';
+      projectLeader.value = t('team.unknown');
     }
   }
 };
@@ -44,7 +46,7 @@ onMounted(() => {
     <div class="card-header">
       <img
           :src="project.imageUrl || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'"
-          alt="Project Image"
+          :alt="$t('team.projectImage')"
           class="project-image"
       />
       <div class="project-overlay">
@@ -57,7 +59,7 @@ onMounted(() => {
       <h3 class="project-name">{{ project.name }}</h3>
       <div class="project-leader" v-if="projectLeader">
         <i class="pi pi-user"></i>
-        <span>Leader: {{ projectLeader }}</span>
+        <span>{{ $t('team.leader') }}: {{ projectLeader }}</span>
       </div>
     </div>
   </div>

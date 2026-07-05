@@ -9,11 +9,6 @@ export default {
     return {
       currentDate: new Date(),
       selectedDateObj: new Date(),
-      monthNames: [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ],
-      dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
       allTasks: [],
       allProjects: [],
       allUsers: [],
@@ -48,14 +43,14 @@ export default {
     },
 
     currentMonthYear() {
-      return `${this.monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`
+      return `${this.getMonthName(this.currentDate.getMonth())} ${this.currentDate.getFullYear()}`
     },
 
     selectedDate() {
       return {
         day: this.selectedDateObj.getDate(),
-        monthYear: `${this.monthNames[this.selectedDateObj.getMonth()]} ${this.selectedDateObj.getFullYear()}`,
-        dayName: this.dayNames[this.selectedDateObj.getDay()]
+        monthYear: `${this.getMonthName(this.selectedDateObj.getMonth())} ${this.selectedDateObj.getFullYear()}`,
+        dayName: this.getDayName(this.selectedDateObj.getDay())
       }
     },
 
@@ -96,13 +91,16 @@ export default {
 
     formatSelectedDate() {
       const date = this.selectedDateObj
-      const dayName = this.dayNames[date.getDay()]
-      const monthName = this.monthNames[date.getMonth()]
+      const dayName = this.getDayName(date.getDay())
+      const monthName = this.getMonthName(date.getMonth())
       const day = date.getDate()
       const year = date.getFullYear()
-      const ordinal = this.getDayOrdinal(day)
 
-      return `${dayName}, ${monthName} ${day}${ordinal}, ${year}`
+      if (this.$i18n.locale === 'es') {
+        return `${dayName}, ${day} de ${monthName} de ${year}`
+      }
+
+      return `${dayName}, ${monthName} ${day}${this.getDayOrdinal(day)}, ${year}`
     },
 
     selectedDateTasks() {
@@ -116,6 +114,19 @@ export default {
     }
   },
   methods: {
+    getMonthName(monthIndex) {
+      const monthKeys = [
+        'january', 'february', 'march', 'april', 'may', 'june',
+        'july', 'august', 'september', 'october', 'november', 'december'
+      ]
+      return this.$t(`calendar.months.${monthKeys[monthIndex]}`)
+    },
+
+    getDayName(dayIndex) {
+      const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+      return this.$t(`calendar.days.${dayKeys[dayIndex]}`)
+    },
+
     resolveThemePreference() {
       const preference = localStorage.getItem('theme') || 'light'
       if (preference === 'system') {
@@ -221,14 +232,14 @@ export default {
     },
 
     getProjectName(projectId) {
-      if (!projectId) return 'Unknown'
+      if (!projectId) return this.$t('calendar.unknown')
       const project = this.allProjects.find(p => p.projectId === projectId)
-      return project ? project.name : `Project ${projectId}`
+      return project ? project.name : this.$t('calendar.projectWithId', { id: projectId })
     },
 
     getAssigneeName(assignedUserIds) {
       if (!assignedUserIds || assignedUserIds.length === 0) {
-        return 'Unassigned'
+        return this.$t('calendar.unassigned')
       }
 
       const userId = assignedUserIds[0]
@@ -236,10 +247,10 @@ export default {
 
       if (user) {
         const name = `${user.name || ''} ${user.lastName || ''}`.trim()
-        return name || user.email || `User ${userId}`
+        return name || user.email || this.$t('calendar.userWithId', { id: userId })
       }
 
-      return `User ${userId}`
+      return this.$t('calendar.userWithId', { id: userId })
     },
 
     hasTasksOnDate(date) {
@@ -311,17 +322,17 @@ export default {
 
     getStatusText(status) {
       const statusTexts = {
-        'TO_DO': 'To Do',
-        'IN_PROGRESS': 'In Progress',
-        'DONE': 'Done'
+        'TO_DO': this.$t('calendar.status.todo'),
+        'IN_PROGRESS': this.$t('calendar.status.inprogress'),
+        'DONE': this.$t('calendar.status.done')
       }
       return statusTexts[status] || status
     },
 
     formatTaskDate(dateString) {
-      if (!dateString) return 'No date'
+      if (!dateString) return this.$t('calendar.nodate')
       const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString(this.$i18n.locale === 'es' ? 'es-PE' : 'en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
@@ -335,8 +346,8 @@ export default {
   <div class="calendar-page" :class="{ 'dark-calendar': isDarkTheme }">
 
     <div class="page-header">
-      <h1 class="title-projects text-4xl font-medium">Calendar</h1>
-      <p class="calendar-subtitle">Manage your tasks deadlines</p>
+      <h1 class="title-projects text-4xl font-medium">{{ $t('calendar.calendar') }}</h1>
+      <p class="calendar-subtitle">{{ $t('calendar.subtitle') }}</p>
     </div>
 
     <div class="calendar-container">
@@ -350,14 +361,14 @@ export default {
 
           <div class="calendar-grid">
             <div class="weekdays">
-              <div class="weekday">Wk</div>
-              <div class="weekday">Su</div>
-              <div class="weekday">Mo</div>
-              <div class="weekday">Tu</div>
-              <div class="weekday">We</div>
-              <div class="weekday">Th</div>
-              <div class="weekday">Fr</div>
-              <div class="weekday">Sa</div>
+              <div class="weekday">{{ $t('calendar.wk') }}</div>
+              <div class="weekday">{{ $t('calendar.sun') }}</div>
+              <div class="weekday">{{ $t('calendar.mon') }}</div>
+              <div class="weekday">{{ $t('calendar.tue') }}</div>
+              <div class="weekday">{{ $t('calendar.wed') }}</div>
+              <div class="weekday">{{ $t('calendar.thu') }}</div>
+              <div class="weekday">{{ $t('calendar.fri') }}</div>
+              <div class="weekday">{{ $t('calendar.sat') }}</div>
             </div>
 
             <div class="calendar-body">
@@ -380,7 +391,7 @@ export default {
         </div>
         <div class="events-section mt-4">
           <div class="events-header">
-            <h3 class="events-title">Tasks for {{ formatSelectedDate }}</h3>
+            <h3 class="events-title">{{ $t('calendar.tasksFor', { date: formatSelectedDate }) }}</h3>
           </div>
 
           <div v-if="selectedDateTasks.length > 0" class="tasks-list">
@@ -391,37 +402,37 @@ export default {
                   {{ getStatusText(task.status) }}
                 </div>
                 <div class="task-date">
-                  Due: {{ formatTaskDate(task.endDate) }}
+                  {{ $t('calendar.due', { date: formatTaskDate(task.endDate) }) }}
                 </div>
               </div>
 
               <div class="task-content">
                 <h4 class="task-title">{{ task.title }}</h4>
-                <p class="task-description">{{ task.description || 'No description' }}</p>
+                <p class="task-description">{{ task.description || $t('calendar.nodescription') }}</p>
 
                 <div class="task-project">
                   <i class="pi pi-folder"></i>
-                  <span>Project: {{ getProjectName(task.projectId) }}</span>
+                  <span>{{ $t('calendar.project') }}: {{ getProjectName(task.projectId) }}</span>
                 </div>
 
                 <div v-if="isLeader" class="task-assignee">
                   <i class="pi pi-user"></i>
-                  <span>Assigned to: {{ getAssigneeName(task.assignedUserIds) }}</span>
+                  <span>{{ $t('calendar.assignedTo') }}: {{ getAssigneeName(task.assignedUserIds) }}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div v-else class="no-events">
-            <span class="no-events-icon">📋</span>
-            <p>No tasks scheduled for this date</p>
+            <i class="pi pi-clipboard no-events-icon"></i>
+            <p>{{ $t('calendar.notasksscheduled') }}</p>
           </div>
         </div>
       </div>
 
       <div class="sidebar">
         <div class="selected-date-card">
-          <h3 class="card-title">Selected Date</h3>
+          <h3 class="card-title">{{ $t('calendar.selecteddate') }}</h3>
           <div class="selected-date-info">
             <div class="date-number">{{ selectedDate.day }}</div>
             <div class="date-details">
@@ -433,32 +444,32 @@ export default {
 
         <div class="quick-actions-section">
           <div class="quick-actions-header">
-            <h3 class="quick-actions-title">Quick information</h3>
+            <h3 class="quick-actions-title">{{ $t('calendar.quickinformation') }}</h3>
           </div>
           <div class="task-info-content">
             <div class="info-item">
               <div class="info-icon">
                 <i class="pi pi-eye" style="color: #6b7280; font-size: 1.125rem;"></i>
               </div>
-              <p>You can view tasks directly on the calendar</p>
+              <p>{{ $t('calendar.info.viewtasks') }}</p>
             </div>
             <div class="info-item">
               <div class="info-icon">
                 <i class="pi pi-circle-fill" style="color: #dc2626; font-size: 1rem;"></i>
               </div>
-              <p>Red dots indicate dates with tasks deadlines</p>
+              <p>{{ $t('calendar.info.reddots') }}</p>
             </div>
             <div class="info-item">
               <div class="info-icon">
                 <i class="pi pi-calendar" style="color: #6b7280; font-size: 1.125rem;"></i>
               </div>
-              <p>Navigate between dates to view pending tasks</p>
+              <p>{{ $t('calendar.info.navigate') }}</p>
             </div>
             <div class="info-item">
               <div class="info-icon">
                 <i class="pi pi-info-circle" style="color: #6b7280; font-size: 1.125rem;"></i>
               </div>
-              <p>Click on any date to see tasks due that day</p>
+              <p>{{ $t('calendar.info.clickdate') }}</p>
             </div>
           </div>
         </div>

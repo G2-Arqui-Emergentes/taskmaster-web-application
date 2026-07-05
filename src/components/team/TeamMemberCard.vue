@@ -42,20 +42,20 @@ const handleCardClick = () => {
     <div class="member-info">
       <img
           :src="member.imageUrl || defaultAvatar"
-          alt="User Avatar"
+          :alt="$t('team.userAvatar')"
           class="member-avatar"
       />
       <div class="member-details">
         <span class="member-name">{{ member.name }} {{ member.lastName || '' }}</span>
-        <span v-if="member.id === currentUserId" class="you-badge">(You)</span>
-        <span v-if="isLeaderOfProject" class="leader-badge">Leader</span>
+        <span v-if="member.id === currentUserId" class="you-badge">({{ $t('team.you') }})</span>
+        <span v-if="isLeaderOfProject" class="leader-badge">{{ $t('team.leader') }}</span>
       </div>
     </div>
 
     <div class="member-actions" v-if="!isSelectionMode">
-      <i class="pi pi-user action-icon" @click.stop="$emit('view-contact', member)" title="View Contact"></i>
-      <i class="pi pi-envelope action-icon" @click.stop="$emit('send-message', member)" title="Send Message"></i>
-      <i v-if="isLeader && member.id !== currentUserId" class="pi pi-trash action-icon delete-icon" @click.stop="$emit('remove-member', member)" title="Remove Member"></i>
+      <i class="pi pi-user action-icon" @click.stop="$emit('view-contact', member)" :title="$t('team.viewContact')"></i>
+      <i class="pi pi-envelope action-icon" @click.stop="$emit('send-message', member)" :title="$t('team.sendMessage')"></i>
+      <i v-if="isLeader && member.id !== currentUserId" class="pi pi-trash action-icon delete-icon" @click.stop="$emit('remove-member', member)" :title="$t('team.removeMember')"></i>
     </div>
   </div>
 </template>

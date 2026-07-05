@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useI18n } from 'vue-i18n';
 import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
 import { UserService } from '@/services/user.service.js';
@@ -13,6 +14,7 @@ const props = defineProps({
 const emit = defineEmits(['back']);
 
 const toast = useToast();
+const { t } = useI18n();
 const userService = new UserService();
 
 const teamMembers = ref([]);
@@ -60,7 +62,7 @@ const loadTeamMembers = async () => {
 const startSelectionMode = () => {
   isSelectionMode.value = true;
   selectedMemberIds.value = [];
-  toast.add({ severity: 'info', summary: 'Meeting Mode', detail: 'Select members to meet with', life: 3000 });
+  toast.add({ severity: 'info', summary: t('team.toast.meetingMode'), detail: t('team.toast.selectMembers'), life: 3000 });
 };
 
 const cancelSelectionMode = () => {
@@ -108,8 +110,8 @@ const sendMessage = () => {
 
   toast.add({
     severity: 'success',
-    summary: 'Coming Soon',
-    detail: `Message to ${selectedUser.value.name} would be sent here`,
+    summary: t('team.toast.comingSoon'),
+    detail: t('team.toast.messageWouldBeSent', { name: selectedUser.value.name }),
     life: 3000
   });
 
@@ -139,8 +141,8 @@ const confirmRemove = async () => {
 
     toast.add({
       severity: 'success',
-      summary: 'Member removed',
-      detail: `${userToRemove.value.name} was removed from ${props.project.name}.`,
+      summary: t('team.toast.memberRemoved'),
+      detail: t('team.toast.memberRemovedDetail', { name: userToRemove.value.name, project: props.project.name }),
       life: 3000
     });
 
@@ -149,10 +151,10 @@ const confirmRemove = async () => {
   } catch (error) {
     const detail = error.response?.data?.message
         || error.response?.data
-        || 'Could not remove this member from the project.';
+        || t('team.toast.couldNotRemoveMember');
     toast.add({
       severity: 'error',
-      summary: 'Error',
+      summary: t('team.toast.error'),
       detail,
       life: 4000
     });
@@ -163,7 +165,7 @@ const confirmRemove = async () => {
 
 const openTeamsMeeting = (user) => {
   if (!user?.email) {
-    toast.add({ severity: 'warn', summary: 'No Email', detail: 'This user does not have an email address.', life: 3000 });
+    toast.add({ severity: 'warn', summary: t('team.toast.noEmail'), detail: t('team.toast.userNoEmail'), life: 3000 });
     return;
   }
   const subject = encodeURIComponent(`Meeting: ${props.project.name} - ${user.name}`);
@@ -176,7 +178,7 @@ const openGroupTeamsMeeting = () => {
   const emails = selectedUsers.map(u => u.email).filter(email => email && email.trim() !== "");
 
   if (emails.length === 0) {
-    toast.add({ severity: 'warn', summary: 'No Emails', detail: 'Selected users do not have valid emails.', life: 3000 });
+    toast.add({ severity: 'warn', summary: t('team.toast.noEmails'), detail: t('team.toast.selectedNoEmails'), life: 3000 });
     return;
   }
 
@@ -220,7 +222,7 @@ onBeforeUnmount(() => {
   <div class="team-members-page" :class="{ 'dark-team-members': isDarkTheme }">
     <div class="team__content-banner flex justify-content-center align-items-center flex-column gap-3">
       <h1 class="font-italic team__content-title text-6xl md:text-7xl xl:text-8xl m-0">
-        {{ project.name }}'s Team
+        {{ $t('team.projectTeam', { project: project.name }) }}
       </h1>
 
       <div class="action-toolbar mt-2">
@@ -231,7 +233,7 @@ onBeforeUnmount(() => {
               @click="startSelectionMode"
           >
             <i class="pi pi-calendar-plus mr-2"></i>
-            Plan Group Meeting
+            {{ $t('team.planGroupMeeting') }}
           </pv-button>
 
           <pv-button
@@ -240,7 +242,7 @@ onBeforeUnmount(() => {
               @click="cancelSelectionMode"
           >
             <i class="pi pi-times mr-2"></i>
-            Cancel Selection
+            {{ $t('team.cancelSelection') }}
           </pv-button>
         </transition>
       </div>
@@ -255,7 +257,7 @@ onBeforeUnmount(() => {
         @keydown.space.prevent="goBackToProjects"
     >
       <i class="pi pi-arrow-left back-icon"></i>
-      <span class="back-text">Back to projects</span>
+      <span class="back-text">{{ $t('team.backToProjects') }}</span>
     </div>
 
     <div class="team-members-list">
@@ -276,10 +278,10 @@ onBeforeUnmount(() => {
 
     <transition name="fade">
       <div v-if="isSelectionMode && selectedCount > 0" class="floating-action-bar">
-        <span class="selection-text">{{ selectedCount }} selected</span>
+        <span class="selection-text">{{ $t('team.selectedCount', { count: selectedCount }) }}</span>
         <button class="group-meet-btn" @click="openGroupTeamsMeeting">
           <i class="pi pi-video mr-2"></i>
-          Meet with Selected
+          {{ $t('team.meetWithSelected') }}
         </button>
       </div>
     </transition>
@@ -293,12 +295,12 @@ onBeforeUnmount(() => {
         <h2 class="popup__content-title">{{ selectedUser.name }} {{ selectedUser.lastName || '' }}</h2>
         <div class="popup__content-description">
           <span class="popup__member-email">{{ selectedUser.email }}</span>
-          <p class="popup__member-description">{{ selectedUser.description || 'No description provided' }}</p>
+          <p class="popup__member-description">{{ selectedUser.description || $t('team.noDescriptionProvided') }}</p>
         </div>
         <div class="mt-3 w-full">
           <pv-button class="teams-btn justify-content-center p-2 border-none w-full text-white font-bold" @click="openTeamsMeeting(selectedUser)">
             <i class="pi pi-video mr-2"></i>
-            Schedule Individual Meeting
+            {{ $t('team.scheduleIndividualMeeting') }}
           </pv-button>
         </div>
       </div>
@@ -307,11 +309,11 @@ onBeforeUnmount(() => {
     <div class="popup" v-if="showMessageModal && selectedUser">
       <div class="popup__content bg-white shadow-1 border-round-2xl flex flex-column justify-content-center align-items-center p-6 relative">
         <i class="pi pi-times absolute cursor-pointer text-xl" style="top: 1rem; right: 1rem;" @click="closeMessageModal"></i>
-        <h2 class="popup__content-title">Send message to {{ selectedUser.name }}</h2>
+        <h2 class="popup__content-title">{{ $t('team.sendMessageTo', { name: selectedUser.name }) }}</h2>
         <p class="popup__member-email">{{ selectedUser.email }}</p>
-        <textarea class="message-textarea" placeholder="Write your message here..." v-model="message"></textarea>
-        <p v-if="!messageSent" class="message-empty">Message cannot be empty</p>
-        <div class="button bg-primary text-white border-round-2xl p-2 mt-4 cursor-pointer" @click="sendMessage">Send</div>
+        <textarea class="message-textarea" :placeholder="$t('team.writeMessage')" v-model="message"></textarea>
+        <p v-if="!messageSent" class="message-empty">{{ $t('team.messageCannotBeEmpty') }}</p>
+        <div class="button bg-primary text-white border-round-2xl p-2 mt-4 cursor-pointer" @click="sendMessage">{{ $t('team.send') }}</div>
       </div>
     </div>
 
@@ -320,14 +322,14 @@ onBeforeUnmount(() => {
         <i class="pi pi-times absolute cursor-pointer text-xl" style="top: 1rem; right: 1rem;" @click="closeRemoveConfirm"></i>
         <div class="text-center">
           <i class="pi pi-exclamation-triangle text-red-500" style="font-size: 3rem;"></i>
-          <h3 class="mt-3">Remove Team Member</h3>
-          <p>Are you sure you want to remove <strong>{{ userToRemove.name }}</strong> from this project?</p>
-          <p class="text-sm text-gray-500">This action cannot be undone.</p>
+          <h3 class="mt-3">{{ $t('team.removeTeamMember') }}</h3>
+          <p>{{ $t('team.removeConfirm', { name: userToRemove.name }) }}</p>
+          <p class="text-sm text-gray-500">{{ $t('team.actionCannotBeUndone') }}</p>
         </div>
         <div class="flex gap-3 mt-4 w-full">
-          <pv-button class="flex-1 p-2 bg-gray-400 hover:bg-gray-500 border-none text-white" :disabled="removingMember" @click="closeRemoveConfirm">Cancel</pv-button>
+          <pv-button class="flex-1 p-2 bg-gray-400 hover:bg-gray-500 border-none text-white" :disabled="removingMember" @click="closeRemoveConfirm">{{ $t('team.cancel') }}</pv-button>
           <pv-button class="flex-1 p-2 bg-red-600 hover:bg-red-700 border-none text-white" :disabled="removingMember" @click="confirmRemove">
-            {{ removingMember ? 'Removing...' : 'Remove' }}
+            {{ removingMember ? $t('team.removing') : $t('team.remove') }}
           </pv-button>
         </div>
       </div>

@@ -11,7 +11,6 @@ export default {
       projects: [],
       selectedTab: "all",
       searchTerm: "",
-      selectedType: "all",
       currentPage: 1,
       perPage: 10,
       readIds: [],
@@ -31,9 +30,9 @@ export default {
     },
     tabs() {
       return [
-        { key: "all", label: "All", count: this.notifications.length },
-        { key: "tasks", label: "Tasks", count: this.taskNotifications.length },
-        { key: "projects", label: "Projects", count: this.projectNotifications.length }
+        { key: "all", label: this.$t("notifications.tabs.all"), count: this.notifications.length },
+        { key: "tasks", label: this.$t("notifications.tabs.tasks"), count: this.taskNotifications.length },
+        { key: "projects", label: this.$t("notifications.tabs.projects"), count: this.projectNotifications.length }
       ];
     },
     tabFilteredNotifications() {
@@ -45,12 +44,10 @@ export default {
       const search = this.searchTerm.trim().toLowerCase();
 
       return this.tabFilteredNotifications.filter((notification) => {
-        const type = this.getNotificationType(notification);
-        const matchesType = this.selectedType === "all" || this.selectedType === type;
         const content = `${notification.title || ""} ${notification.message || ""}`.toLowerCase();
         const matchesSearch = !search || content.includes(search);
 
-        return matchesType && matchesSearch;
+        return matchesSearch;
       });
     },
     totalPages() {
@@ -70,9 +67,6 @@ export default {
   },
   watch: {
     selectedTab() {
-      this.currentPage = 1;
-    },
-    selectedType() {
       this.currentPage = 1;
     },
     searchTerm() {
@@ -186,7 +180,9 @@ export default {
       return "tasks";
     },
     getTypeLabel(notification) {
-      return this.getNotificationType(notification) === "projects" ? "Project" : "Task";
+      return this.getNotificationType(notification) === "projects"
+          ? this.$t("notifications.types.project")
+          : this.$t("notifications.types.task");
     },
     getNotificationIcon(notification) {
       const type = this.getNotificationType(notification);
@@ -200,9 +196,11 @@ export default {
       if (!sentAt) return { date: "", time: "" };
       const date = new Date(sentAt);
       if (Number.isNaN(date.getTime())) return { date: "", time: "" };
+      const activeLanguage = this.$i18n?.locale?.value || this.$i18n?.locale;
+      const currentLocale = activeLanguage === "es" ? "es-PE" : "en-GB";
 
       return {
-        date: date.toLocaleDateString("en-GB", {
+        date: date.toLocaleDateString(currentLocale, {
           day: "2-digit",
           month: "short",
           year: "numeric"
@@ -245,25 +243,15 @@ export default {
   <section class="notifications-page" :class="{ 'dark-notifications': isDarkTheme }">
     <header class="page-header">
       <div>
-        <h1>All Notifications</h1>
-        <p>Stay up to date with everything happening in your projects.</p>
+        <h1>{{ $t("notifications.title") }}</h1>
+        <p>{{ $t("notifications.subtitle") }}</p>
       </div>
 
       <div class="header-actions">
         <button type="button" class="ghost-button" @click="markAllAsRead">
           <i class="pi pi-check"></i>
-          <span>Mark all as read</span>
+          <span>{{ $t("notifications.markAllAsRead") }}</span>
         </button>
-
-        <label class="type-filter">
-          <i class="pi pi-filter"></i>
-          <select v-model="selectedType" aria-label="Filter notifications by type">
-            <option value="all">All types</option>
-            <option value="tasks">Tasks</option>
-            <option value="projects">Projects</option>
-          </select>
-          <i class="pi pi-chevron-down"></i>
-        </label>
       </div>
     </header>
 
@@ -283,16 +271,16 @@ export default {
       </div>
 
       <label class="search-box">
-        <input v-model="searchTerm" type="search" placeholder="Search notifications..." />
+        <input v-model="searchTerm" type="search" :placeholder="$t('notifications.searchPlaceholder')" />
         <i class="pi pi-search"></i>
       </label>
     </div>
 
     <div class="notifications-table">
       <div class="table-header">
-        <span>Notification</span>
-        <span>Type</span>
-        <span>Date</span>
+        <span>{{ $t("notifications.table.notification") }}</span>
+        <span>{{ $t("notifications.table.type") }}</span>
+        <span>{{ $t("notifications.table.date") }}</span>
         <span></span>
       </div>
 
@@ -328,13 +316,16 @@ export default {
         </span>
       </button>
 
-      <div v-if="loading" class="empty-state">Loading notifications...</div>
-      <div v-else-if="!paginatedNotifications.length" class="empty-state">No notifications found.</div>
+      <div v-if="loading" class="empty-state">{{ $t("notifications.loading") }}</div>
+      <div v-else-if="!paginatedNotifications.length" class="empty-state">{{ $t("notifications.empty") }}</div>
 
       <footer class="table-footer">
         <p>
-          Showing {{ paginationStart }} to {{ paginationEnd }} of
-          {{ filteredNotifications.length }} notifications
+          {{ $t("notifications.pagination.showing", {
+            start: paginationStart,
+            end: paginationEnd,
+            total: filteredNotifications.length
+          }) }}
         </p>
 
         <div class="pagination">
@@ -347,10 +338,10 @@ export default {
           </button>
 
           <label class="per-page">
-            <select v-model.number="perPage" aria-label="Notifications per page">
-              <option :value="5">5 per page</option>
-              <option :value="10">10 per page</option>
-              <option :value="20">20 per page</option>
+            <select v-model.number="perPage" :aria-label="$t('notifications.pagination.perPageAria')">
+              <option :value="5">{{ $t("notifications.pagination.perPage", { count: 5 }) }}</option>
+              <option :value="10">{{ $t("notifications.pagination.perPage", { count: 10 }) }}</option>
+              <option :value="20">{{ $t("notifications.pagination.perPage", { count: 20 }) }}</option>
             </select>
             <i class="pi pi-chevron-down"></i>
           </label>
@@ -360,7 +351,7 @@ export default {
 
     <aside class="tip-banner">
       <i class="pi pi-info-circle"></i>
-      <p><strong>Tip:</strong> Click on any notification to go to the related task or project.</p>
+      <p><strong>{{ $t("notifications.tip.label") }}:</strong> {{ $t("notifications.tip.text") }}</p>
     </aside>
   </section>
 </template>
@@ -403,7 +394,6 @@ export default {
 }
 
 .ghost-button,
-.type-filter,
 .search-box,
 .per-page {
   height: 2.75rem;
@@ -426,14 +416,12 @@ export default {
   color: var(--accent);
 }
 
-.type-filter,
 .per-page {
   position: relative;
   padding: 0 0.85rem;
   gap: 0.6rem;
 }
 
-.type-filter select,
 .per-page select {
   min-width: 6.8rem;
   border: 0;
@@ -445,8 +433,6 @@ export default {
   cursor: pointer;
 }
 
-.type-filter .pi-filter,
-.type-filter .pi-chevron-down,
 .per-page .pi-chevron-down {
   color: #4b5563;
   font-size: 0.85rem;
@@ -761,7 +747,6 @@ export default {
 }
 
 .dark-notifications .ghost-button,
-.dark-notifications .type-filter,
 .dark-notifications .search-box,
 .dark-notifications .per-page,
 .dark-notifications .notifications-table {
@@ -778,7 +763,6 @@ export default {
   background: rgba(244, 63, 115, 0.08);
 }
 
-.dark-notifications .type-filter select,
 .dark-notifications .per-page select,
 .dark-notifications .search-box input {
   color: #eef2f8;
@@ -792,8 +776,6 @@ export default {
   color: #7d8798;
 }
 
-.dark-notifications .type-filter .pi-filter,
-.dark-notifications .type-filter .pi-chevron-down,
 .dark-notifications .per-page .pi-chevron-down,
 .dark-notifications .search-box i,
 .dark-notifications .row-actions {

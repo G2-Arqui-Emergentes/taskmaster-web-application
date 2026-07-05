@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   priorityData: {
@@ -16,7 +19,7 @@ const chartData = computed(() => {
   return {
     labels: props.priorityData.labels,
     datasets: [{
-      label: 'Percentage of Tasks (%)',
+      label: t('analytics.percentageoftasks'),
       backgroundColor: ['#fecaca', '#fed7aa', '#ef4444'],
       data: props.priorityData.data
     }]
@@ -38,7 +41,7 @@ const chartOptions = computed(() => {
       },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.raw}% of tasks`
+          label: (context) => t('analytics.percentoftasks', { percentage: context.raw })
         }
       }
     },
@@ -52,7 +55,7 @@ const chartOptions = computed(() => {
         grid: { color: surfaceBorder },
         title: {
           display: true,
-          text: 'Percentage (%)',
+          text: t('analytics.percentage'),
           color: textColorSecondary
         },
         max: 100
@@ -72,7 +75,7 @@ const chartOptions = computed(() => {
         class="h-12rem w-full"
     />
     <div v-else class="flex w-full justify-content-center align-items-center">
-      <p class="text-gray-500">No tasks with priority assigned</p>
+      <p class="text-gray-500">{{ $t('analytics.notaskspriority') }}</p>
     </div>
   </div>
 </template>

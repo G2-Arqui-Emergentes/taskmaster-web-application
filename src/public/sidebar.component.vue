@@ -20,11 +20,7 @@ export default {
   data() {
     return {
       currentTheme: document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light',
-      selectedCountry: {name: 'English', code: 'en', flag: 'https://m.media-amazon.com/images/S/aplus-seller-content-images-us-east-1/ATVPDKIKX0DER/A2CS421R6PZ7VX/62606ba4-5d5c-4b79-b31c-1de7719d6bf5._CR574,184,1266,1266_PT0_SX300__.jpg'},
-      countries: [
-        {name: 'Spanish', code: 'es', flag: 'https://ih1.redbubble.net/image.3267488605.3818/raf,360x360,075,t,fafafa:ca443f4786.jpg'},
-        {name: 'English', code: 'en', flag: 'https://m.media-amazon.com/images/S/aplus-seller-content-images-us-east-1/ATVPDKIKX0DER/A2CS421R6PZ7VX/62606ba4-5d5c-4b79-b31c-1de7719d6bf5._CR574,184,1266,1266_PT0_SX300__.jpg'},
-      ]
+      selectedCountryCode: 'en'
     };
   },
   props: {
@@ -46,6 +42,20 @@ export default {
     },
     isDarkTheme() {
       return this.currentTheme === 'dark';
+    },
+    countries() {
+      return [
+        {name: this.$t('sidebar.spanish'), code: 'es', flag: 'https://ih1.redbubble.net/image.3267488605.3818/raf,360x360,075,t,fafafa:ca443f4786.jpg'},
+        {name: this.$t('sidebar.english'), code: 'en', flag: 'https://m.media-amazon.com/images/S/aplus-seller-content-images-us-east-1/ATVPDKIKX0DER/A2CS421R6PZ7VX/62606ba4-5d5c-4b79-b31c-1de7719d6bf5._CR574,184,1266,1266_PT0_SX300__.jpg'},
+      ];
+    },
+    selectedCountry: {
+      get() {
+        return this.countries.find((country) => country.code === this.selectedCountryCode) || this.countries[1];
+      },
+      set(country) {
+        this.selectedCountryCode = country?.code || 'en';
+      }
     }
   },
   methods: {
@@ -74,9 +84,6 @@ export default {
     navigateToTeam() {
       this.$router.push('/team');
     },
-    navigateToNotifications() {
-      this.$router.push('/notifications');
-    },
     navigateToLogin() {
       this.$store.commit('removeUser');
       this.$store.commit('removeToken');
@@ -87,9 +94,11 @@ export default {
     },
     changeLanguage(lang) {
       this.$i18n.locale = lang;
+      this.selectedCountryCode = lang;
     }
   },
   mounted() {
+    this.selectedCountryCode = this.$i18n.locale || 'en';
     this.currentTheme = document.documentElement.dataset.theme || this.resolveThemePreference();
     window.addEventListener('theme-changed', this.syncTheme);
     window.addEventListener('storage', this.syncTheme);
@@ -146,17 +155,24 @@ export default {
             :class="{ active: $route.path === '/team' }"
             v-if="hasUser">
           <TeamIcon class="menu-icon" />
-          <p class="menu-text">Team</p>
-        </li>
-
-        <li class="menu-item"
-            @click="navigateToNotifications"
-            :class="{ active: $route.path === '/notifications' }"
-            v-if="hasUser">
-          <i class="pi pi-bell menu-icon"></i>
-          <p class="menu-text">Notifications</p>
+          <p class="menu-text" v-t="'sidebar.team'">Team</p>
         </li>
       </ul>
+
+      <div class="ares-sidebar-card">
+        <div class="ares-card-icon">
+          <i class="pi pi-comments"></i>
+        </div>
+        <div class="ares-card-copy">
+          <strong>Ares</strong>
+          <span>{{ $t('sidebar.aresAssistant') }}</span>
+          <small>{{ $t('sidebar.aresHelp') }}</small>
+        </div>
+        <div class="ares-online-pill">
+          <i></i>
+          <span>{{ $t('sidebar.aresOnline') }}</span>
+        </div>
+      </div>
 
       <div class="footer-container">
         <div class="footer-row">
@@ -169,7 +185,7 @@ export default {
                 v-model="selectedCountry"
                 :options="countries"
                 optionLabel="name"
-                placeholder="Language"
+                :placeholder="$t('sidebar.language')"
                 @change="changeLanguage(selectedCountry.code)"
             >
               <template #value="slotProps">
@@ -294,6 +310,92 @@ i.menu-icon {
   margin-left: 14.5px;
   padding-top: 1rem;
   border-top: 1px solid var(--sidebar-border);
+}
+
+.ares-sidebar-card {
+  position: relative;
+  width: 300px;
+  min-height: 7rem;
+  margin: auto 0 1rem 14.5px;
+  padding: 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(228, 0, 70, 0.2);
+  background: linear-gradient(145deg, #fff1f5, #ffe4ec);
+  box-shadow: 0 14px 32px rgba(228, 0, 70, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  box-sizing: border-box;
+}
+
+.ares-card-icon {
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 12px;
+  background: #e40046;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-shadow: 0 10px 20px rgba(228, 0, 70, 0.22);
+}
+
+.ares-card-icon i {
+  font-size: 1.15rem;
+}
+
+.ares-card-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.ares-card-copy strong {
+  color: #111827;
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.ares-card-copy span {
+  color: #374151;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ares-card-copy small {
+  color: #7f1d1d;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ares-online-pill {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  min-height: 1.35rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ares-online-pill i {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
 }
 
 .footer-row {
@@ -451,6 +553,35 @@ aside.dark-sidebar .logout-item:hover .logout-text {
   color: var(--brand-600);
 }
 
+aside.dark-sidebar .ares-sidebar-card {
+  background: linear-gradient(145deg, rgba(225, 29, 72, 0.26), rgba(128, 18, 55, 0.34));
+  border-color: rgba(244, 63, 115, 0.36);
+  box-shadow: 0 18px 36px rgba(225, 29, 72, 0.14);
+}
+
+aside.dark-sidebar .ares-card-icon {
+  background: #ff4f82;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(244, 63, 115, 0.22);
+}
+
+aside.dark-sidebar .ares-card-copy strong {
+  color: #eef2f8;
+}
+
+aside.dark-sidebar .ares-card-copy span {
+  color: #ffd7e2;
+}
+
+aside.dark-sidebar .ares-card-copy small {
+  color: #ffe4ec;
+}
+
+aside.dark-sidebar .ares-online-pill {
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+}
+
 aside.dark-sidebar :deep(.p-dropdown-panel) {
   background: #10141d;
   border: 1px solid #242a36;
@@ -489,6 +620,12 @@ aside.dark-sidebar :deep(.p-dropdown-item.p-highlight) {
   .footer-container {
     width: 260px;
     margin-left: 10px;
+  }
+
+  .ares-sidebar-card {
+    width: 260px;
+    margin: auto 0 0.9rem 10px;
+    padding: 0.85rem;
   }
 
   .footer-row {

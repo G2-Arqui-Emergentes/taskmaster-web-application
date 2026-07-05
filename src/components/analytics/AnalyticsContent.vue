@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AnalyticsDropdown from './AnalyticsDropdown.vue'
 import AnalyticsWorkloadCard from './AnalyticsWorkloadCard.vue'
 import AnalyticsHealthCard from './AnalyticsHealthCard.vue'
@@ -11,6 +12,7 @@ import { getProjectById } from '@/services/project.service.js'
 import { UserService } from '@/services/user.service.js'
 
 const selectedProjectId = ref(null)
+const { t, locale } = useI18n()
 const hasProjects = ref(true)
 const activeModal = ref(null)
 const currentTheme = ref(document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light')
@@ -28,14 +30,20 @@ const formatNumber = (num) => {
 }
 
 const formatDate = (dateString) => {
-  if (!dateString) return 'Not set'
+  if (!dateString) return t('analytics.notset')
   const date = new Date(dateString)
-  return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
+  return date.toLocaleDateString(locale.value === 'es' ? 'es-ES' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 const formatStatus = (status) => {
-  if (!status) return 'Unknown'
-  return status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+  if (!status) return t('analytics.unknown')
+  switch (status) {
+    case 'PLANNED': return t('analytics.status.planned')
+    case 'IN_PROGRESS': return t('analytics.status.inprogress')
+    case 'COMPLETED': return t('analytics.status.completed')
+    case 'CANCELLED': return t('analytics.status.cancelled')
+    default: return status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+  }
 }
 
 const getStatusClass = (status) => {
@@ -66,7 +74,7 @@ const workloadData = computed(() => {
 const priorityData = computed(() => {
   const tasks = allTasks.value
   if (!tasks.length) {
-    return { labels: ['Low', 'Medium', 'High'], data: [0, 0, 0] }
+    return { labels: [t('analytics.priority.low'), t('analytics.priority.medium'), t('analytics.priority.high')], data: [0, 0, 0] }
   }
 
   const low = tasks.filter(t => t.priority === 'LOW').length
@@ -75,7 +83,7 @@ const priorityData = computed(() => {
   const total = tasks.length
 
   return {
-    labels: ['Low', 'Medium', 'High'],
+    labels: [t('analytics.priority.low'), t('analytics.priority.medium'), t('analytics.priority.high')],
     data: [
       Math.round((low / total) * 100),
       Math.round((medium / total) * 100),
@@ -315,14 +323,14 @@ onBeforeUnmount(() => {
   <section class="analytics-page h-full p-4 lg:p-5 w-full relative" :class="{ 'dark-analytics': isDarkTheme }" style="min-height: 100%">
     <div class="flex flex-row justify-content-between flex-wrap gap-0">
       <div class="flex flex-column gap-4" style="width: unset">
-        <h2 class="title-analytics text-4xl">Analytics</h2>
+        <h2 class="title-analytics text-4xl">{{ $t('analytics.analytics') }}</h2>
         <AnalyticsDropdown
             @no-projects="handleNoProjects"
             @project-selected="handleProjectSelected"
         />
       </div>
       <div class="insights-badge align-self-center border-1 flex align-items-center flex-row border-round-2xl text-white mb-2">
-        <p class="w-max">Project Insights</p>
+        <p class="w-max">{{ $t('analytics.projectinsights') }}</p>
         <i class="text-lg pi pi-chart-line"></i>
       </div>
     </div>
@@ -331,26 +339,26 @@ onBeforeUnmount(() => {
 
       <pv-card class="card budget w-full p-4 cursor-pointer" @click="openModal('budget')">
         <template #header>
-          <p class="font-medium mb-3">Budget Overview:</p>
+          <p class="font-medium mb-3">{{ $t('analytics.budgetoverview') }}:</p>
         </template>
         <template #content>
           <div class="budget-stats">
             <div class="budget-item">
-              <span class="budget-label">Total Budget</span>
+              <span class="budget-label">{{ $t('analytics.totalbudget') }}</span>
               <span class="budget-value">${{ formatNumber(projectData.budget) }}</span>
             </div>
             <div class="budget-progress">
               <div class="progress-bar">
                 <div class="progress-fill" :style="{ width: completionPercentage + '%' }"></div>
               </div>
-              <span class="progress-text">{{ completionPercentage }}% Complete</span>
+              <span class="progress-text">{{ $t('analytics.percentcomplete', { percentage: completionPercentage }) }}</span>
             </div>
             <div class="budget-item">
-              <span class="budget-label">Project Status</span>
+              <span class="budget-label">{{ $t('analytics.projectstatus') }}</span>
               <span class="status-badge" :class="getStatusClass(projectData.status)">{{ formatStatus(projectData.status) }}</span>
             </div>
             <div class="budget-item">
-              <span class="budget-label">Due Date</span>
+              <span class="budget-label">{{ $t('analytics.duedate') }}</span>
               <span class="budget-value">{{ formatDate(projectData.endDate) }}</span>
             </div>
           </div>
@@ -359,7 +367,7 @@ onBeforeUnmount(() => {
 
       <pv-card class="card workload flex w-full flex-column cursor-pointer" @click="openModal('workload')">
         <template #header>
-          <p class="text">Team Workload:</p>
+          <p class="text">{{ $t('analytics.teamworkload') }}:</p>
         </template>
         <template #content>
           <div class="graph">
@@ -370,7 +378,7 @@ onBeforeUnmount(() => {
 
       <pv-card class="card health flex w-full flex-column w-full cursor-pointer" @click="openModal('health')">
         <template #header>
-          <p class="text">Project Health:</p>
+          <p class="text">{{ $t('analytics.projecthealth') }}:</p>
         </template>
         <template #content>
           <div class="flex w-full">
@@ -381,7 +389,7 @@ onBeforeUnmount(() => {
 
       <pv-card class="card priority flex w-full flex-column w-full cursor-pointer" @click="openModal('priority')">
         <template #header>
-          <p class="text">Priority Distribution:</p>
+          <p class="text">{{ $t('analytics.prioritydistribution') }}:</p>
         </template>
         <template #content>
           <div class="flex">
@@ -392,7 +400,7 @@ onBeforeUnmount(() => {
 
       <pv-card class="card timeline flex w-full flex-column w-full cursor-pointer" @click="openModal('timeline')">
         <template #header>
-          <p class="text">Weekly Progress (Last 8 weeks):</p>
+          <p class="text">{{ $t('analytics.weeklyprogress') }}:</p>
         </template>
         <template #content>
           <div class="flex">
@@ -405,7 +413,7 @@ onBeforeUnmount(() => {
 
     <section v-else>
       <div class="flex flex-column align-items-center justify-content-center h-full">
-        <p class="text-2xl font-medium">No projects found</p>
+        <p class="text-2xl font-medium">{{ $t('analytics.noprojectsfound') }}</p>
       </div>
     </section>
 

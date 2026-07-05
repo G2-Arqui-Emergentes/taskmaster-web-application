@@ -28,7 +28,7 @@ export default {
       },
       selectedTheme: localStorage.getItem('theme') || 'light',
       currentTheme: document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light',
-      passwordLastUpdated: 'Not updated in this session',
+      passwordLastUpdated: this.$t('profile.notUpdatedInSession'),
       passwordSubmitting: false,
       refreshKey: 0
     };
@@ -40,14 +40,14 @@ export default {
       const lastName = this.user.lastName?.trim() || '';
       const full = `${name} ${lastName}`.trim();
       if (full) return full;
-      return this.user.email?.split('@')[0] || 'User';
+      return this.user.email?.split('@')[0] || this.$t('profile.user');
     },
     userRole() {
       const roles = this.user.roles || [];
-      if (roles.includes('ROLE_LEADER')) return 'Leader';
-      if (roles.includes('ROLE_MEMBER')) return 'Member';
-      if (roles.includes('ROLE_ADMIN')) return 'Admin';
-      return 'Member';
+      if (roles.includes('ROLE_LEADER')) return this.$t('profile.roles.leader');
+      if (roles.includes('ROLE_MEMBER')) return this.$t('profile.roles.member');
+      if (roles.includes('ROLE_ADMIN')) return this.$t('profile.roles.admin');
+      return this.$t('profile.roles.member');
     },
     isDarkTheme() {
       return this.currentTheme === 'dark';
@@ -55,7 +55,7 @@ export default {
   },
   methods: {
     formatSalary(salary) {
-      if (!salary || salary === 0) return 'Not provided';
+      if (!salary || salary === 0) return this.$t('profile.notProvided');
       return `$${salary.toLocaleString()}`;
     },
     buildUpdatePayload(overrides = {}) {
@@ -101,10 +101,10 @@ export default {
         const response = await this.userService.updateUser(updatedUser);
         this.$store.commit('setUserData', response);
         this.refreshKey++;
-        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Profile picture updated', life: 3000 });
+        this.$toast.add({ severity: 'success', summary: this.$t('profile.toast.success'), detail: this.$t('profile.toast.profilePictureUpdated'), life: 3000 });
         this.showImageModal = false;
       } catch (error) {
-        this.$toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || 'Could not update profile picture', life: 3000 });
+        this.$toast.add({ severity: 'error', summary: this.$t('profile.toast.error'), detail: error.response?.data?.message || this.$t('profile.toast.couldNotUpdateProfilePicture'), life: 3000 });
       }
     },
     async saveProfile(formData) {
@@ -120,10 +120,10 @@ export default {
         const response = await this.userService.updateUser(updatedUser);
         this.$store.commit('setUserData', response);
         this.refreshKey++;
-        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Profile updated successfully', life: 3000 });
+        this.$toast.add({ severity: 'success', summary: this.$t('profile.toast.success'), detail: this.$t('profile.toast.profileUpdated'), life: 3000 });
         this.showEditModal = false;
       } catch (error) {
-        this.$toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || 'Could not update profile', life: 3000 });
+        this.$toast.add({ severity: 'error', summary: this.$t('profile.toast.error'), detail: error.response?.data?.message || this.$t('profile.toast.couldNotUpdateProfile'), life: 3000 });
       }
     },
     async changePassword(payload) {
@@ -132,14 +132,14 @@ export default {
       this.passwordSubmitting = true;
       try {
         await this.userService.changePassword(payload?.current, payload?.new);
-        this.passwordLastUpdated = 'just now';
+        this.passwordLastUpdated = this.$t('profile.justNow');
         this.showPasswordModal = false;
-        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Password changed successfully', life: 3000 });
+        this.$toast.add({ severity: 'success', summary: this.$t('profile.toast.success'), detail: this.$t('profile.toast.passwordChanged'), life: 3000 });
       } catch (error) {
         const detail = error.response?.data?.message
             || error.response?.data
-            || 'Could not change password. Please verify your current password.';
-        this.$toast.add({ severity: 'error', summary: 'Error', detail, life: 4000 });
+            || this.$t('profile.toast.couldNotChangePassword');
+        this.$toast.add({ severity: 'error', summary: this.$t('profile.toast.error'), detail, life: 4000 });
       } finally {
         this.passwordSubmitting = false;
       }
@@ -185,20 +185,20 @@ export default {
 <template>
   <div class="profile-page" :class="{ 'dark-profile': isDarkTheme }">
     <div class="profile-header">
-      <h1 class="profile-title">Account Settings</h1>
-      <p class="profile-subtitle">Manage your profile, security and preferences.</p>
+      <h1 class="profile-title">{{ $t('profile.accountSettings') }}</h1>
+      <p class="profile-subtitle">{{ $t('profile.subtitle') }}</p>
     </div>
 
     <div class="profile-layout">
       <div class="profile-card">
         <div class="card-header">
-          <h2 class="card-title">Profile</h2>
+          <h2 class="card-title">{{ $t('profile.profile') }}</h2>
           <i class="pi pi-pencil edit-header-icon" @click="toggleEditMode"></i>
         </div>
 
         <div class="profile-avatar-section">
           <div class="avatar-wrapper" @click="openImageUpload">
-            <img :src="user.imageUrl || defaultAvatar" alt="Profile picture" class="profile-avatar" />
+            <img :src="user.imageUrl || defaultAvatar" :alt="$t('profile.profilePicture')" class="profile-avatar" />
             <div class="avatar-overlay">
               <i class="pi pi-camera"></i>
             </div>
@@ -214,24 +214,24 @@ export default {
 
         <div class="profile-info-section">
           <div class="info-item">
-            <div class="info-label">Email Address</div>
-            <div class="info-value">{{ user.email || 'Not provided' }}</div>
+            <div class="info-label">{{ $t('profile.emailAddress') }}</div>
+            <div class="info-value">{{ user.email || $t('profile.notProvided') }}</div>
           </div>
           <div class="info-item">
-            <div class="info-label">Phone</div>
-            <div class="info-value">{{ user.phone || 'Not provided' }}</div>
+            <div class="info-label">{{ $t('profile.phone') }}</div>
+            <div class="info-value">{{ user.phone || $t('profile.notProvided') }}</div>
           </div>
           <div class="info-item">
-            <div class="info-label">Age</div>
-            <div class="info-value">{{ user.age || 'Not provided' }}</div>
+            <div class="info-label">{{ $t('profile.age') }}</div>
+            <div class="info-value">{{ user.age || $t('profile.notProvided') }}</div>
           </div>
           <div class="info-item">
-            <div class="info-label">Salary</div>
+            <div class="info-label">{{ $t('profile.salary') }}</div>
             <div class="info-value">{{ formatSalary(user.salary) }}</div>
           </div>
           <div class="info-item">
-            <div class="info-label">Bio</div>
-            <div class="info-value">{{ user.bio || 'Not provided' }}</div>
+            <div class="info-label">{{ $t('profile.bio') }}</div>
+            <div class="info-value">{{ user.bio || $t('profile.notProvided') }}</div>
           </div>
         </div>
       </div>
@@ -241,7 +241,7 @@ export default {
           <div class="card-header">
             <div class="header-left">
               <i class="pi pi-shield"></i>
-              <h2 class="card-title">Security</h2>
+              <h2 class="card-title">{{ $t('profile.security') }}</h2>
             </div>
           </div>
 
@@ -250,8 +250,8 @@ export default {
               <div class="option-left">
                 <i class="pi pi-lock"></i>
                 <div class="option-text">
-                  <span class="option-title">Change password</span>
-                  <span class="option-subtitle">Last updated {{ passwordLastUpdated }}</span>
+                  <span class="option-title">{{ $t('profile.changePassword') }}</span>
+                  <span class="option-subtitle">{{ $t('profile.lastUpdated', { value: passwordLastUpdated }) }}</span>
                 </div>
               </div>
               <i class="pi pi-angle-right option-arrow"></i>
@@ -261,8 +261,8 @@ export default {
               <div class="option-left">
                 <i class="pi pi-mobile"></i>
                 <div class="option-text">
-                  <span class="option-title">Two Factor Authentication</span>
-                  <span class="option-subtitle">Status: <span class="status-active">Active</span></span>
+                  <span class="option-title">{{ $t('profile.twoFactorAuthentication') }}</span>
+                  <span class="option-subtitle">{{ $t('profile.status') }}: <span class="status-active">{{ $t('profile.active') }}</span></span>
                 </div>
               </div>
               <i class="pi pi-angle-right option-arrow"></i>
@@ -275,27 +275,27 @@ export default {
             <div class="card-header">
               <div class="header-left">
                 <i class="pi pi-bell"></i>
-                <h2 class="card-title">Notifications</h2>
+                <h2 class="card-title">{{ $t('profile.notifications') }}</h2>
               </div>
             </div>
 
             <div class="notifications-wrapper">
               <div class="notification-option">
-                <span class="option-title">Email Alerts</span>
+                <span class="option-title">{{ $t('profile.emailAlerts') }}</span>
                 <label class="custom-toggle">
                   <input type="checkbox" v-model="notifications.email" />
                   <span class="toggle-slider"></span>
                 </label>
               </div>
               <div class="notification-option">
-                <span class="option-title">Push Notifications</span>
+                <span class="option-title">{{ $t('profile.pushNotifications') }}</span>
                 <label class="custom-toggle">
                   <input type="checkbox" v-model="notifications.push" />
                   <span class="toggle-slider"></span>
                 </label>
               </div>
               <div class="notification-option">
-                <span class="option-title">Desktop Banner</span>
+                <span class="option-title">{{ $t('profile.desktopBanner') }}</span>
                 <label class="custom-toggle">
                   <input type="checkbox" v-model="notifications.desktop" />
                   <span class="toggle-slider"></span>
@@ -308,7 +308,7 @@ export default {
             <div class="card-header">
               <div class="header-left">
                 <i class="pi pi-palette"></i>
-                <h2 class="card-title">Appearance</h2>
+                <h2 class="card-title">{{ $t('profile.appearance') }}</h2>
               </div>
             </div>
 
@@ -316,21 +316,21 @@ export default {
               <div class="theme-option" :class="{ active: selectedTheme === 'light' }" @click="selectTheme('light')">
                 <div class="theme-left">
                   <i class="pi pi-sun"></i>
-                  <span>Light Mode</span>
+                  <span>{{ $t('profile.lightMode') }}</span>
                 </div>
                 <i v-if="selectedTheme === 'light'" class="pi pi-check-circle theme-check"></i>
               </div>
               <div class="theme-option" :class="{ active: selectedTheme === 'dark' }" @click="selectTheme('dark')">
                 <div class="theme-left">
                   <i class="pi pi-moon"></i>
-                  <span>Dark Mode</span>
+                  <span>{{ $t('profile.darkMode') }}</span>
                 </div>
                 <i v-if="selectedTheme === 'dark'" class="pi pi-check-circle theme-check"></i>
               </div>
               <div class="theme-option" :class="{ active: selectedTheme === 'system' }" @click="selectTheme('system')">
                 <div class="theme-left">
                   <i class="pi pi-desktop"></i>
-                  <span>System Default</span>
+                  <span>{{ $t('profile.systemDefault') }}</span>
                 </div>
                 <i v-if="selectedTheme === 'system'" class="pi pi-check-circle theme-check"></i>
               </div>

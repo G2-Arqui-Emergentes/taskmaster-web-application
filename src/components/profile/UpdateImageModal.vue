@@ -50,26 +50,26 @@ export default {
   <div v-if="visible" class="modal-overlay" @click.self="close">
     <div class="modal-box" :class="{ 'dark-modal': isDarkTheme }">
       <div class="modal-header">
-        <h2 class="modal-title">Update Profile Picture</h2>
+        <h2 class="modal-title">{{ $t('profile.updateProfilePicture') }}</h2>
         <button class="modal-close" @click="close"><i class="pi pi-times"></i></button>
       </div>
 
       <div class="modal-body">
         <div class="edit-form">
           <div class="form-group">
-            <label>Image URL</label>
-            <input type="text" v-model="imageUrl" placeholder="Enter image URL" />
+            <label>{{ $t('profile.imageUrl') }}</label>
+            <input type="text" v-model="imageUrl" :placeholder="$t('profile.enterImageUrl')" />
           </div>
           <div class="preview-section" v-if="imageUrl">
-            <label>Preview:</label>
-            <img :src="imageUrl" class="preview-image" @error="handleImageError" />
+            <label>{{ $t('profile.preview') }}:</label>
+            <img :src="imageUrl" :alt="$t('profile.profilePicturePreview')" class="preview-image" @error="handleImageError" />
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn-cancel" @click="close">Cancel</button>
-        <button class="btn-save" @click="update">Update</button>
+        <button class="btn-cancel" @click="close">{{ $t('profile.cancel') }}</button>
+        <button class="btn-save" @click="update">{{ $t('profile.update') }}</button>
       </div>
     </div>
   </div>

@@ -31,6 +31,7 @@ const routes = [
             { path: 'home', component: Home,meta: { title: 'Home Page' }},
             { path: 'calendar', component: Calendar,meta: { title: 'Calendar' } },
             { path: 'projects', component: ProjectsComponent, meta: { title: 'Projects' } },
+            { path: 'tasks', component: ProjectsComponent, meta: { title: 'Tasks' } },
             { path: 'projects/:id/toDo', name: 'projectTodo', component: TasksBoard, props: true, meta: { title: 'Tasks' } },
             { path: 'analytics', component: Analytics, meta: { title: 'Analytics' } },
             { path: 'team', component: Team, meta: { title: 'Team' } },

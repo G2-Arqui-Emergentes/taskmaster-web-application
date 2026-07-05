@@ -35,5 +35,66 @@
   "actual": "Real",
   "planned": "Planificado",
   "budget": "Presupuesto",
-  "youcanview": "Puedes ver"
+  "youcanview": "Puedes ver",
+  "projectinsights": "Insights del proyecto",
+  "selectproject": "Selecciona un proyecto",
+  "budgetoverview": "Resumen de presupuesto",
+  "totalbudget": "Presupuesto total",
+  "percentcomplete": "{percentage}% completo",
+  "projectstatus": "Estado del proyecto",
+  "duedate": "Fecha de vencimiento",
+  "teamworkload": "Carga de trabajo del equipo",
+  "projecthealth": "Salud del proyecto",
+  "prioritydistribution": "Distribuci\u00f3n de prioridad",
+  "weeklyprogress": "Progreso semanal (\u00faltimas 8 semanas)",
+  "notset": "No definido",
+  "unknown": "Desconocido",
+  "tasksassigned": "Tareas asignadas",
+  "taskscount": "{count} tareas",
+  "numberoftasks": "N\u00famero de tareas",
+  "noteammembersassigned": "No hay miembros del equipo asignados",
+  "notaskscreated": "A\u00fan no hay tareas creadas",
+  "percentageoftasks": "Porcentaje de tareas (%)",
+  "percentoftasks": "{percentage}% de tareas",
+  "percentage": "Porcentaje (%)",
+  "notaskspriority": "No hay tareas con prioridad asignada",
+  "taskscompleted": "Tareas completadas",
+  "taskscompletedcount": "{count} tareas completadas",
+  "nocompletedtasks": "No hay tareas completadas en las \u00faltimas 8 semanas",
+  "close": "Cerrar",
+  "priority": {
+    "low": "Baja",
+    "medium": "Media",
+    "high": "Alta"
+  },
+  "status": {
+    "planned": "Planificado",
+    "inprogress": "En progreso",
+    "completed": "Completado",
+    "cancelled": "Cancelado"
+  },
+  "modal": {
+    "information": "Informaci\u00f3n",
+    "defaultDescription": "Los datos se calculan autom\u00e1ticamente a partir de las tareas del proyecto y los miembros del equipo.",
+    "budget": {
+      "title": "Resumen de presupuesto",
+      "description": "Muestra el presupuesto total del proyecto, el porcentaje actual de avance basado en tareas y el estado del proyecto."
+    },
+    "workload": {
+      "title": "Carga de trabajo del equipo",
+      "description": "Distribuci\u00f3n de tareas entre miembros del equipo. Ayuda a identificar qui\u00e9n tiene demasiadas o muy pocas asignaciones."
+    },
+    "health": {
+      "title": "Salud del proyecto",
+      "description": "Distribuci\u00f3n del estado de tareas (Por hacer, En progreso, Hecho). Un mayor porcentaje de tareas hechas indica un proyecto m\u00e1s saludable."
+    },
+    "priority": {
+      "title": "Distribuci\u00f3n de prioridad",
+      "description": "Desglose porcentual de tareas por prioridad (Baja, Media, Alta). Ayuda a gestionar tareas cr\u00edticas."
+    },
+    "timeline": {
+      "title": "Progreso semanal",
+      "description": "Registra la cantidad de tareas completadas por semana. Muestra el impulso del proyecto en el tiempo."
+    }
+  }
 }

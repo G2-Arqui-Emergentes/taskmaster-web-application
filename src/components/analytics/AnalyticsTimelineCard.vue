@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   timelineData: {
@@ -17,7 +20,7 @@ const chartData = computed(() => {
   return {
     labels: props.timelineData.labels,
     datasets: [{
-      label: 'Tasks Completed',
+      label: t('analytics.taskscompleted'),
       data: props.timelineData.data,
       fill: true,
       backgroundColor: isDark ? 'rgba(255, 79, 130, 0.14)' : 'rgba(178, 34, 34, 0.1)',
@@ -52,7 +55,7 @@ const chartOptions = computed(() => {
         callbacks: {
           label: (context) => {
             const value = context.raw
-            return `${Math.round(value)} task${value !== 1 ? 's' : ''} completed`
+            return t('analytics.taskscompletedcount', { count: Math.round(value) })
           }
         }
       }
@@ -78,7 +81,7 @@ const chartOptions = computed(() => {
         grid: { color: surfaceBorder },
         title: {
           display: true,
-          text: 'Number of Tasks',
+          text: t('analytics.numberoftasks'),
           color: textColorSecondary
         },
         min: 0,
@@ -107,7 +110,7 @@ const chartOptions = computed(() => {
         class="w-full h-12rem"
     />
     <div v-else class="flex w-full justify-content-center align-items-center">
-      <p class="text-gray-500">No completed tasks in the last 8 weeks</p>
+      <p class="text-gray-500">{{ $t('analytics.nocompletedtasks') }}</p>
     </div>
   </div>
 </template>

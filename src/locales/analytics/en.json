@@ -35,5 +35,66 @@
   "actual": "Actual",
   "planned": "Planned",
   "budget": "Budget",
-  "youcanview": "You can view"
+  "youcanview": "You can view",
+  "projectinsights": "Project Insights",
+  "selectproject": "Select a project",
+  "budgetoverview": "Budget Overview",
+  "totalbudget": "Total Budget",
+  "percentcomplete": "{percentage}% Complete",
+  "projectstatus": "Project Status",
+  "duedate": "Due Date",
+  "teamworkload": "Team Workload",
+  "projecthealth": "Project Health",
+  "prioritydistribution": "Priority Distribution",
+  "weeklyprogress": "Weekly Progress (Last 8 weeks)",
+  "notset": "Not set",
+  "unknown": "Unknown",
+  "tasksassigned": "Tasks Assigned",
+  "taskscount": "{count} tasks",
+  "numberoftasks": "Number of Tasks",
+  "noteammembersassigned": "No team members assigned",
+  "notaskscreated": "No tasks created yet",
+  "percentageoftasks": "Percentage of Tasks (%)",
+  "percentoftasks": "{percentage}% of tasks",
+  "percentage": "Percentage (%)",
+  "notaskspriority": "No tasks with priority assigned",
+  "taskscompleted": "Tasks Completed",
+  "taskscompletedcount": "{count} tasks completed",
+  "nocompletedtasks": "No completed tasks in the last 8 weeks",
+  "close": "Close",
+  "priority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High"
+  },
+  "status": {
+    "planned": "Planned",
+    "inprogress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "modal": {
+    "information": "Information",
+    "defaultDescription": "Data is automatically calculated from your project tasks and team members.",
+    "budget": {
+      "title": "Budget Overview",
+      "description": "Shows total project budget, current completion percentage based on tasks, and project status."
+    },
+    "workload": {
+      "title": "Team Workload",
+      "description": "Distribution of tasks across team members. Helps identify who has too many or too few assignments."
+    },
+    "health": {
+      "title": "Project Health",
+      "description": "Task status distribution (To-Do, In Progress, Done). Higher percentage of Done tasks means healthier project."
+    },
+    "priority": {
+      "title": "Priority Distribution",
+      "description": "Percentage breakdown of tasks by priority (Low, Medium, High). Helps manage critical tasks."
+    },
+    "timeline": {
+      "title": "Weekly Progress",
+      "description": "Tracks number of tasks completed per week. Shows project momentum over time."
+    }
+  }
 }

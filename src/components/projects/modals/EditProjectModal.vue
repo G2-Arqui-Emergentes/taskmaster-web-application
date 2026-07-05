@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import Calendar from 'primevue/calendar';
 import { updateProject as updateProjectApi } from "@/services/project.service.js";
 import { useToast } from "primevue/usetoast";
@@ -7,13 +8,14 @@ import { useToast } from "primevue/usetoast";
 const props = defineProps({ visible: { type: Boolean, default: false }, project: Object, onUpdated: Function });
 const emit = defineEmits(['update:visible']);
 const toast = useToast();
+const { t } = useI18n();
 
-const statusOptions = [
-  { label: 'PLANNED', value: 'PLANNED' },
-  { label: 'IN PROGRESS', value: 'IN_PROGRESS' },
-  { label: 'COMPLETED', value: 'COMPLETED' },
-  { label: 'CANCELLED', value: 'CANCELLED' }
-];
+const statusOptions = computed(() => [
+  { label: t('projects.status.planned'), value: 'PLANNED' },
+  { label: t('projects.status.inProgressUpper'), value: 'IN_PROGRESS' },
+  { label: t('projects.status.completed'), value: 'COMPLETED' },
+  { label: t('projects.status.cancelled'), value: 'CANCELLED' }
+]);
 
 const form = ref({
   projectId: null,
@@ -31,8 +33,8 @@ const statusDropdownOpen = ref(false);
 const nameInput = ref(null);
 
 const getStatusLabel = (value) => {
-  const option = statusOptions.find(o => o.value === value);
-  return option ? option.label : 'Select status';
+  const option = statusOptions.value.find(o => o.value === value);
+  return option ? option.label : t('projects.selectStatus');
 };
 
 const toggleStatusDropdown = () => {
@@ -55,11 +57,11 @@ const onClose = () => {
 
 const validateForm = () => {
   errors.value = [];
-  if (!form.value.name.trim()) errors.value.push('Project name is required');
-  if (!form.value.description.trim()) errors.value.push('Description is required');
-  if (!form.value.imageUrl.trim()) errors.value.push('Image URL is required');
-  if (form.value.budget < 0) errors.value.push('Budget must be a positive number');
-  if (!form.value.endDate) errors.value.push('End date is required');
+  if (!form.value.name.trim()) errors.value.push(t('projects.validation.projectNameRequired'));
+  if (!form.value.description.trim()) errors.value.push(t('projects.validation.descriptionRequired'));
+  if (!form.value.imageUrl.trim()) errors.value.push(t('projects.validation.imageUrlRequired'));
+  if (form.value.budget < 0) errors.value.push(t('projects.validation.budgetPositive'));
+  if (!form.value.endDate) errors.value.push(t('projects.validation.endDateRequired'));
   return errors.value.length === 0;
 };
 
@@ -80,13 +82,13 @@ const updateProject = async () => {
       endDate: new Date(form.value.endDate).toISOString()
     };
     await updateProjectApi(form.value.projectId, projectData);
-    toast.add({ severity: 'success', summary: 'Success', detail: 'Project updated successfully', life: 3000 });
+    toast.add({ severity: 'success', summary: t('projects.toast.success'), detail: t('projects.toast.projectUpdated'), life: 3000 });
     emit('update:visible', false);
     if (props.onUpdated) props.onUpdated();
   } catch (error) {
     console.error('Error updating project:', error);
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not update project', life: 3000 });
-    errors.value = ['Error updating project. Please try again.'];
+    toast.add({ severity: 'error', summary: t('projects.toast.error'), detail: t('projects.toast.couldNotUpdateProject'), life: 3000 });
+    errors.value = [t('projects.validation.updateProjectError')];
   } finally {
     loading.value = false;
   }
@@ -143,41 +145,41 @@ watch(() => props.visible, (val) => {
   <div v-if="visible" class="modal-overlay" @click.self="onClose">
     <div class="modal-box">
       <div class="modal-header">
-        <h2 class="modal-title">Edit Project</h2>
+        <h2 class="modal-title">{{ $t('projects.editProject') }}</h2>
         <button class="modal-close" @click="onClose"><i class="pi pi-times"></i></button>
       </div>
 
       <div class="modal-body">
         <div v-if="errors.length" class="error-list">
-          <b>Please correct the following error(s):</b>
+          <b>{{ $t('projects.validation.correctErrors') }}</b>
           <ul>
             <li v-for="error in errors" :key="error">{{ error }}</li>
           </ul>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Project Name <span class="required">*</span></label>
+          <label class="form-label">{{ $t('projects.projectName') }} <span class="required">*</span></label>
           <input
               type="text"
               ref="nameInput"
               class="form-input"
               v-model="form.name"
-              placeholder="Enter project name"
+              :placeholder="$t('projects.enterProjectName')"
           />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Description <span class="required">*</span></label>
+          <label class="form-label">{{ $t('projects.description') }} <span class="required">*</span></label>
           <textarea
               class="form-input textarea"
               v-model="form.description"
               rows="3"
-              placeholder="Describe your project..."
+              :placeholder="$t('projects.describeProject')"
           ></textarea>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Image URL <span class="required">*</span></label>
+          <label class="form-label">{{ $t('projects.imageUrl') }} <span class="required">*</span></label>
           <input
               type="text"
               class="form-input"
@@ -188,7 +190,7 @@ watch(() => props.visible, (val) => {
 
         <div class="form-row">
           <div class="form-group half">
-            <label class="form-label">Budget <span class="required">*</span></label>
+            <label class="form-label">{{ $t('projects.budget') }} <span class="required">*</span></label>
             <input
                 type="number"
                 min="0"
@@ -199,7 +201,7 @@ watch(() => props.visible, (val) => {
           </div>
 
           <div class="form-group half">
-            <label class="form-label">Status <span class="required">*</span></label>
+            <label class="form-label">{{ $t('projects.statusLabel') }} <span class="required">*</span></label>
             <div class="custom-select" @click="toggleStatusDropdown">
               <div class="select-trigger">
                 <span>{{ getStatusLabel(form.status) }}</span>
@@ -222,14 +224,14 @@ watch(() => props.visible, (val) => {
         </div>
 
         <div class="form-group">
-          <label class="form-label">End Date <span class="required">*</span></label>
+          <label class="form-label">{{ $t('projects.endDate') }} <span class="required">*</span></label>
           <div class="custom-date-wrapper">
             <Calendar
                 v-model="form.endDate"
                 class="form-input calendar-input"
                 showIcon
                 dateFormat="yy-mm-dd"
-                placeholder="Select end date"
+                :placeholder="$t('projects.selectEndDate')"
                 :appendTo="'self'"
             />
           </div>
@@ -239,7 +241,7 @@ watch(() => props.visible, (val) => {
       <div class="modal-footer">
         <button type="button" class="btn-edit" @click="checkForm" :disabled="loading">
           <i v-if="loading" class="pi pi-spin pi-spinner"></i>
-          <span v-else>Save Changes</span>
+          <span v-else>{{ $t('projects.saveChanges') }}</span>
         </button>
       </div>
     </div>

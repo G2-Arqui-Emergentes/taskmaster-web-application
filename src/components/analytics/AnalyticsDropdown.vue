@@ -71,7 +71,7 @@ onMounted(() => {
       v-model="selectedProject"
       :options="projects"
       optionLabel="name"
-      placeholder="Select a project"
+      :placeholder="$t('analytics.selectproject')"
       class="w-full md:w-14rem p-2 mb-4"
       @change="handleProjectChange"
   >

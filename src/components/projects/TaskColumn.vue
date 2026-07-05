@@ -1,8 +1,10 @@
 <script setup>
 import Card from 'primevue/card'
 import TaskCard from './TaskCard.vue'
+import { useI18n } from 'vue-i18n'
 
 const emits = defineEmits(['updAll', 'taskMoved', 'openMenu', 'closeMenu'])
+const { t } = useI18n()
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -33,6 +35,15 @@ function columnClass(taskColumn) {
   }
 }
 
+function columnLabel(taskColumn) {
+  switch (taskColumn) {
+    case 'To-Do': return t('projects.status.toDo')
+    case 'In progress': return t('projects.status.inProgress')
+    case 'Done': return t('projects.status.done')
+    default: return taskColumn
+  }
+}
+
 function onTaskMoved(updatedTask) {
   emits('taskMoved', updatedTask)
 }
@@ -50,7 +61,7 @@ function handleCloseMenu() {
   <div class="project-card enhanced-column">
     <Card class="p-card vista" :style="{ background: cambiarColor(props.taskColumn) }">
       <template #title>
-        <h3 class="column-title" :class="columnClass(props.taskColumn)">{{ props.taskColumn }}</h3>
+        <h3 class="column-title" :class="columnClass(props.taskColumn)">{{ columnLabel(props.taskColumn) }}</h3>
       </template>
       <template #content>
         <div class="overflow">

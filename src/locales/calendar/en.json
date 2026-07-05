@@ -6,5 +6,54 @@
   "wed": "Wed",
   "thu": "Thu",
   "fri": "Fri",
-  "sat": "Sat"
+  "sat": "Sat",
+  "wk": "Wk",
+  "subtitle": "Manage your task deadlines",
+  "tasksFor": "Tasks for {date}",
+  "due": "Due: {date}",
+  "project": "Project",
+  "assignedTo": "Assigned to",
+  "selecteddate": "Selected Date",
+  "quickinformation": "Quick information",
+  "notasksscheduled": "No tasks scheduled for this date",
+  "nodescription": "No description",
+  "nodate": "No date",
+  "unknown": "Unknown",
+  "unassigned": "Unassigned",
+  "projectWithId": "Project {id}",
+  "userWithId": "User {id}",
+  "status": {
+    "todo": "To Do",
+    "inprogress": "In Progress",
+    "done": "Done"
+  },
+  "months": {
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
+  },
+  "days": {
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  },
+  "info": {
+    "viewtasks": "You can view tasks directly on the calendar",
+    "reddots": "Red dots indicate dates with task deadlines",
+    "navigate": "Navigate between dates to view pending tasks",
+    "clickdate": "Click on any date to see tasks due that day"
+  }
 }

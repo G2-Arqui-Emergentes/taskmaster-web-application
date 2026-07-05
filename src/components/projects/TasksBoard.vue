@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import TaskColumn from './TaskColumn.vue'
 import { getTasksByProjectAndStatus, createTask as createTaskApi } from '@/services/task.service.js'
 import { getProjectById } from '@/services/project.service.js'
@@ -11,6 +12,7 @@ import CreateTaskModal from './modals/CreateTaskModal.vue'
 const props = defineProps({ id: { type: String, required: true } })
 
 const store = useStore()
+const { t } = useI18n()
 const userService = new UserService()
 const currentUser = computed(() => store.state.user || JSON.parse(localStorage.getItem('user') || '{}'))
 const isTeamMember = computed(() => {
@@ -190,7 +192,7 @@ const handleCloseMenu = () => {
             <div class="project-title-section">
               <h1 class="title-projects">{{ project.name }}</h1>
               <div v-if="isLeader" class="project-code-wrapper">
-                <span class="code-label">Code:</span>
+                <span class="code-label">{{ $t('projects.code') }}:</span>
                 <div class="code-box">
                   <span class="code-text">{{ project.key }}</span>
                   <button class="copy-btn" @click="copyProjectCode(project.key)">
@@ -203,9 +205,9 @@ const handleCloseMenu = () => {
           </div>
         </div>
         <div class="board-header-actions">
-          <h3 class="subtitle">Tareas asignadas</h3>
+          <h3 class="subtitle">{{ $t('projects.assignedTasks') }}</h3>
           <Button v-if="isLeader" class="add-task modern" @click="openCreateTaskModal">
-            <i class="pi pi-plus-circle" style="margin-right:0.5rem;"></i> Nueva tarea
+            <i class="pi pi-plus-circle" style="margin-right:0.5rem;"></i> {{ $t('projects.newTask') }}
           </Button>
         </div>
       </header>
@@ -217,7 +219,7 @@ const handleCloseMenu = () => {
           @taskCreated="handleTaskCreated"
       />
 
-      <div v-if="loading" class="loader-modern">Cargando tareas...</div>
+      <div v-if="loading" class="loader-modern">{{ $t('projects.loadingTasks') }}</div>
       <main v-else class="columns-board">
         <TaskColumn
             class="column-card"

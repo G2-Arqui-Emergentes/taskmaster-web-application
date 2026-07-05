@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   modalType: {
@@ -9,37 +10,38 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+const { t } = useI18n()
 
 const modalInfo = {
   budget: {
-    title: 'Budget Overview',
-    description: 'Shows total project budget, current completion percentage based on tasks, and project status.',
+    title: 'analytics.modal.budget.title',
+    description: 'analytics.modal.budget.description',
     icon: 'pi pi-dollar'
   },
   workload: {
-    title: 'Team Workload',
-    description: 'Distribution of tasks across team members. Helps identify who has too many or too few assignments.',
+    title: 'analytics.modal.workload.title',
+    description: 'analytics.modal.workload.description',
     icon: 'pi pi-users'
   },
   health: {
-    title: 'Project Health',
-    description: 'Task status distribution (To-Do, In Progress, Done). Higher percentage of Done tasks means healthier project.',
+    title: 'analytics.modal.health.title',
+    description: 'analytics.modal.health.description',
     icon: 'pi pi-heart'
   },
   priority: {
-    title: 'Priority Distribution',
-    description: 'Percentage breakdown of tasks by priority (Low, Medium, High). Helps manage critical tasks.',
+    title: 'analytics.modal.priority.title',
+    description: 'analytics.modal.priority.description',
     icon: 'pi pi-chart-bar'
   },
   timeline: {
-    title: 'Weekly Progress',
-    description: 'Tracks number of tasks completed per week. Shows project momentum over time.',
+    title: 'analytics.modal.timeline.title',
+    description: 'analytics.modal.timeline.description',
     icon: 'pi pi-calendar'
   }
 }
 
-const modalTitle = computed(() => modalInfo[props.modalType]?.title || 'Information')
-const modalDescription = computed(() => modalInfo[props.modalType]?.description || 'Data is automatically calculated from your project tasks and team members.')
+const modalTitle = computed(() => t(modalInfo[props.modalType]?.title || 'analytics.modal.information'))
+const modalDescription = computed(() => t(modalInfo[props.modalType]?.description || 'analytics.modal.defaultDescription'))
 const modalIcon = computed(() => modalInfo[props.modalType]?.icon || 'pi pi-info-circle')
 
 const closeModal = () => {
@@ -61,7 +63,7 @@ const closeModal = () => {
         </div>
       </div>
       <div class="modal-buttons">
-        <button @click="closeModal">Close</button>
+        <button @click="closeModal">{{ $t('analytics.close') }}</button>
       </div>
     </div>
   </div>

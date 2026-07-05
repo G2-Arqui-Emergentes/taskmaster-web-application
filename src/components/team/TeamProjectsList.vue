@@ -87,13 +87,13 @@ onBeforeUnmount(() => {
 <template>
   <div class="team-projects-page" :class="{ 'dark-team-projects': isDarkTheme }">
     <div class="projects-header">
-      <h1 class="title-projects">Team</h1>
-      <p class="subtitle-header">Select a project to view its members</p>
+      <h1 class="title-projects">{{ $t('team.team') }}</h1>
+      <p class="subtitle-header">{{ $t('team.selectProject') }}</p>
     </div>
 
     <div class="projects-content">
       <div class="projects-stats">
-        <h3 class="subtitle">Your Projects:</h3>
+        <h3 class="subtitle">{{ $t('team.yourProjects') }}:</h3>
         <Paginator :rows="pageSize" :totalRecords="projects.length" :first="first" @page="onPageChange" template="PrevPageLink PageLinks NextPageLink" />
       </div>
 

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import Button from 'primevue/button';
 import { deleteProject as deleteProjectApi } from "@/services/project.service.js";
 import { useToast } from "primevue/usetoast";
@@ -7,6 +8,7 @@ import { useToast } from "primevue/usetoast";
 const props = defineProps({ visible: { type: Boolean, default: false }, project: Object, onDeleted: Function });
 const emit = defineEmits(['update:visible']);
 const toast = useToast();
+const { t } = useI18n();
 const deleteData = ref(null);
 
 const onClose = () => { emit('update:visible', false); };
@@ -15,11 +17,11 @@ const confirmDelete = async () => {
   if (!deleteData.value) return;
   try {
     await deleteProjectApi(deleteData.value.projectId);
-    toast.add({ severity: 'success', summary: 'Success', detail: 'Project Deleted Successfully', life: 3000 });
+    toast.add({ severity: 'success', summary: t('projects.toast.success'), detail: t('projects.toast.projectDeleted'), life: 3000 });
     emit('update:visible', false);
     if (props.onDeleted) props.onDeleted();
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not delete project', life: 3000 });
+    toast.add({ severity: 'error', summary: t('projects.toast.error'), detail: t('projects.toast.couldNotDeleteProject'), life: 3000 });
   }
 };
 
@@ -32,12 +34,12 @@ watch(() => props.visible, (val) => {
   <div v-if="visible" class="modal-overlay" @click.self="onClose">
     <div class="modal-box delete-box">
       <div class="delete-content">
-        <h2 class="delete-title">Delete Project?</h2>
-        <p class="delete-message">Deleting the project will permanently erase all data.</p>
+        <h2 class="delete-title">{{ $t('projects.deleteProjectQuestion') }}</h2>
+        <p class="delete-message">{{ $t('projects.deleteProjectMessage') }}</p>
       </div>
       <div class="delete-footer">
-        <Button label="Cancel" @click="onClose" class="cancel-btn" />
-        <Button label="Delete" @click="confirmDelete" class="delete-btn" />
+        <Button :label="$t('projects.cancel')" @click="onClose" class="cancel-btn" />
+        <Button :label="$t('projects.delete')" @click="confirmDelete" class="delete-btn" />
       </div>
     </div>
   </div>

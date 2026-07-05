@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useI18n } from 'vue-i18n';
 import Paginator from 'primevue/paginator';
 import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
@@ -10,6 +11,7 @@ import DeleteProjectModal from './modals/DeleteProjectModal.vue';
 import { getProjectsByLeader, getProjectsByMember, joinProjectByCode } from "@/services/project.service.js";
 
 const toast = useToast();
+const { t } = useI18n();
 const visible = ref(false);
 const visibleEdit = ref(false);
 const visibleDelete = ref(false);
@@ -33,7 +35,7 @@ const joining = ref(false);
 const joinProject = async () => {
   const code = String(joinCode.value || '').trim();
   if (!code) {
-    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Enter a project code', life: 3000 });
+    toast.add({ severity: 'warn', summary: t('projects.toast.warning'), detail: t('projects.toast.enterProjectCode'), life: 3000 });
     return;
   }
   joining.value = true;
@@ -45,11 +47,11 @@ const joinProject = async () => {
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
-    toast.add({ severity: 'success', summary: 'Joined!', detail: `You have joined ${data.name || 'the project'}`, life: 3000 });
+    toast.add({ severity: 'success', summary: t('projects.toast.joined'), detail: t('projects.toast.joinedProject', { name: data.name || t('projects.theProject') }), life: 3000 });
     joinCode.value = '';
     await loadProjectsByRole();
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Could not join project', life: 4000 });
+    toast.add({ severity: 'error', summary: t('projects.toast.error'), detail: error.message || t('projects.toast.couldNotJoinProject'), life: 4000 });
   } finally {
     joining.value = false;
   }
@@ -122,7 +124,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="projects-page" :class="{ 'dark-projects': isDarkTheme }">
     <div class="projects-header">
-      <h1 class="title-projects">Projects</h1>
+      <h1 class="title-projects">{{ $t('projects.projects') }}</h1>
       <div class="projects-actions">
         <div v-if="!isLeader" class="join-project">
           <div class="join-container">
@@ -132,7 +134,7 @@ onBeforeUnmount(() => {
                   v-model="joinCode"
                   @keyup.enter="joinProject"
                   class="join-input"
-                  placeholder="Enter project code"
+                  :placeholder="$t('projects.enterProjectCode')"
               />
             </div>
             <button
@@ -143,7 +145,7 @@ onBeforeUnmount(() => {
                 :class="{ 'join-button-loading': joining }"
             >
               <i v-if="!joining" class="pi pi-plus-circle join-btn-icon"></i>
-              <span>Join Project</span>
+              <span>{{ $t('projects.joinProject') }}</span>
             </button>
           </div>
         </div>
@@ -152,7 +154,7 @@ onBeforeUnmount(() => {
 
     <div class="projects-content">
       <div class="projects-stats">
-        <h3 class="subtitle">Current Projects:</h3>
+        <h3 class="subtitle">{{ $t('projects.currentprojects') }}:</h3>
         <Paginator :rows="pageSize" :totalRecords="projects.length" :first="first" @page="onPageChange" template="PrevPageLink PageLinks NextPageLink" />
       </div>
 
@@ -161,7 +163,7 @@ onBeforeUnmount(() => {
         <div v-if="isLeader" class="add-project">
           <button type="button" class="addBut" @click="showAddProjectDialog">
             <i class="pi pi-plus"></i>
-            <span>Add project</span>
+            <span>{{ $t('projects.addProject') }}</span>
           </button>
         </div>
       </div>
