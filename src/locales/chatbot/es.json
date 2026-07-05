@@ -1,0 +1,24 @@
+{
+  "status": "Asistente IA",
+  "welcome": "¡Hola! ¿En qué puedo ayudarte?",
+  "placeholder": "Pregunta lo que quieras...",
+  "send": "Enviar mensaje",
+  "open": "Abrir chatbot Ares",
+  "close": "Cerrar chatbot Ares",
+  "fallbackResponse": "Recibí tu solicitud, pero no pude leer una respuesta clara.",
+  "error": "No pude conectarme con Ares ahora. Inténtalo otra vez.",
+  "quickQuestions": {
+    "projectSummary": "Resumen del proyecto",
+    "myTasks": "Mis tareas",
+    "risks": "Riesgos",
+    "deadlines": "Fechas límite",
+    "teamWorkload": "Carga del equipo"
+  },
+  "prompts": {
+    "projectSummary": "Dame un resumen del proyecto.",
+    "myTasks": "Muéstrame mis tareas.",
+    "risks": "¿Cuáles son los riesgos actuales del proyecto?",
+    "deadlines": "¿Qué fechas límite debo revisar?",
+    "teamWorkload": "Muéstrame la carga de trabajo del equipo."
+  }
+}

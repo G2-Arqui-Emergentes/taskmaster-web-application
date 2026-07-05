@@ -1,0 +1,31 @@
+{
+  "title": "All Notifications",
+  "subtitle": "Stay up to date with everything happening in your projects.",
+  "markAllAsRead": "Mark all as read",
+  "searchPlaceholder": "Search notifications...",
+  "tabs": {
+    "all": "All",
+    "tasks": "Tasks",
+    "projects": "Projects"
+  },
+  "table": {
+    "notification": "Notification",
+    "type": "Type",
+    "date": "Date"
+  },
+  "types": {
+    "project": "Project",
+    "task": "Task"
+  },
+  "loading": "Loading notifications...",
+  "empty": "No notifications found.",
+  "pagination": {
+    "showing": "Showing {start} to {end} of {total} notifications",
+    "perPage": "{count} per page",
+    "perPageAria": "Notifications per page"
+  },
+  "tip": {
+    "label": "Tip",
+    "text": "Click on any notification to go to the related task or project."
+  }
+}

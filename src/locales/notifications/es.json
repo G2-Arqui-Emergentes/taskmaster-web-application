@@ -1,0 +1,31 @@
+{
+  "title": "Todas las notificaciones",
+  "subtitle": "Mantente al día con todo lo que sucede en tus proyectos.",
+  "markAllAsRead": "Marcar todo como leído",
+  "searchPlaceholder": "Buscar notificaciones...",
+  "tabs": {
+    "all": "Todas",
+    "tasks": "Tareas",
+    "projects": "Proyectos"
+  },
+  "table": {
+    "notification": "Notificación",
+    "type": "Tipo",
+    "date": "Fecha"
+  },
+  "types": {
+    "project": "Proyecto",
+    "task": "Tarea"
+  },
+  "loading": "Cargando notificaciones...",
+  "empty": "No se encontraron notificaciones.",
+  "pagination": {
+    "showing": "Mostrando {start} a {end} de {total} notificaciones",
+    "perPage": "{count} por página",
+    "perPageAria": "Notificaciones por página"
+  },
+  "tip": {
+    "label": "Consejo",
+    "text": "Haz clic en cualquier notificación para ir a la tarea o proyecto relacionado."
+  }
+}

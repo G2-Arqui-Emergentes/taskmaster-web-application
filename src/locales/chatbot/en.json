@@ -1,0 +1,24 @@
+{
+  "status": "AI assistant",
+  "welcome": "Hi! How can I help?",
+  "placeholder": "Ask anything...",
+  "send": "Send message",
+  "open": "Open Ares chatbot",
+  "close": "Close Ares chatbot",
+  "fallbackResponse": "I received your request, but I could not read a clear answer.",
+  "error": "I could not connect to Ares right now. Please try again.",
+  "quickQuestions": {
+    "projectSummary": "Project Summary",
+    "myTasks": "My Tasks",
+    "risks": "Risks",
+    "deadlines": "Deadlines",
+    "teamWorkload": "Team Workload"
+  },
+  "prompts": {
+    "projectSummary": "Give me a project summary.",
+    "myTasks": "Show me my tasks.",
+    "risks": "What are the current project risks?",
+    "deadlines": "What deadlines should I watch?",
+    "teamWorkload": "Show me the team workload."
+  }
+}
