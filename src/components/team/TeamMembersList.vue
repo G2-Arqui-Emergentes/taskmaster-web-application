@@ -5,6 +5,13 @@ import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
 import { UserService } from '@/services/user.service.js';
 import { removeUserFromProject } from '@/services/project.service.js';
+import {
+  createMeeting,
+  deleteMeeting,
+  getMeetingById,
+  getMeetings,
+  updateMeeting
+} from '@/services/meeting.service.js';
 import TeamMemberCard from './TeamMemberCard.vue';
 
 const props = defineProps({
@@ -34,10 +41,32 @@ const messageSent = ref(true);
 
 const isSelectionMode = ref(false);
 const selectedMemberIds = ref([]);
+const showMeetingsModal = ref(false);
+const meetings = ref([]);
+const meetingsLoading = ref(false);
+const savingMeeting = ref(false);
+const editingMeetingId = ref(null);
+const selectedMeeting = ref(null);
+const meetingForm = ref({
+  title: '',
+  description: '',
+  startTime: '',
+  endTime: '',
+  participantIds: []
+});
 
 const currentUserId = computed(() => currentUser.value?.id);
 const selectedCount = computed(() => selectedMemberIds.value.length);
 const isDarkTheme = computed(() => currentTheme.value === 'dark');
+const participantOptions = computed(() => {
+  return teamMembers.value
+      .filter(member => member.id !== currentUserId.value)
+      .map(member => ({
+        id: member.id,
+        name: `${member.name || ''} ${member.lastName || ''}`.trim() || member.email,
+        email: member.email
+      }));
+});
 
 const loadTeamMembers = async () => {
   try {
@@ -60,9 +89,7 @@ const loadTeamMembers = async () => {
 };
 
 const startSelectionMode = () => {
-  isSelectionMode.value = true;
-  selectedMemberIds.value = [];
-  toast.add({ severity: 'info', summary: t('team.toast.meetingMode'), detail: t('team.toast.selectMembers'), life: 3000 });
+  openMeetingsModal();
 };
 
 const cancelSelectionMode = () => {
@@ -164,29 +191,198 @@ const confirmRemove = async () => {
 };
 
 const openTeamsMeeting = (user) => {
-  if (!user?.email) {
-    toast.add({ severity: 'warn', summary: t('team.toast.noEmail'), detail: t('team.toast.userNoEmail'), life: 3000 });
-    return;
-  }
-  const subject = encodeURIComponent(`Meeting: ${props.project.name} - ${user.name}`);
-  const teamsUrl = `https://teams.microsoft.com/l/meeting/new?subject=${subject}&attendees=${user.email}`;
-  window.open(teamsUrl, '_blank');
+  const participantIds = user?.id ? [user.id] : [];
+  closeContactModal();
+  openMeetingsModal(participantIds);
 };
 
 const openGroupTeamsMeeting = () => {
-  const selectedUsers = teamMembers.value.filter(m => selectedMemberIds.value.includes(m.id));
-  const emails = selectedUsers.map(u => u.email).filter(email => email && email.trim() !== "");
+  openMeetingsModal(selectedMemberIds.value);
+  cancelSelectionMode();
+};
 
-  if (emails.length === 0) {
-    toast.add({ severity: 'warn', summary: t('team.toast.noEmails'), detail: t('team.toast.selectedNoEmails'), life: 3000 });
+const resetMeetingForm = (participantIds = []) => {
+  const allowedIds = participantOptions.value.map(member => Number(member.id));
+  meetingForm.value = {
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: '',
+    participantIds: participantIds.map(Number).filter(id => allowedIds.includes(id))
+  };
+  editingMeetingId.value = null;
+};
+
+const toDatetimeLocal = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+};
+
+const toIsoString = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
+
+const normalizeMeetings = (data) => {
+  const list = Array.isArray(data) ? data : data?.data || [];
+  const projectMemberIds = new Set(teamMembers.value.map(member => Number(member.id)));
+  projectMemberIds.add(Number(currentUserId.value));
+
+  return list.filter(meeting => {
+    const participantIds = Array.isArray(meeting.participantIds)
+        ? meeting.participantIds.map(Number)
+        : [];
+    const belongsToProjectLeader = Number(meeting.leaderId) === Number(props.project.leaderId);
+    const hasProjectParticipant = participantIds.some(id => projectMemberIds.has(id));
+    const currentUserAssigned = participantIds.includes(Number(currentUserId.value));
+    const currentUserLeads = Number(meeting.leaderId) === Number(currentUserId.value);
+
+    return hasProjectParticipant && (belongsToProjectLeader || currentUserAssigned || currentUserLeads);
+  }).sort((a, b) => new Date(a.startTime || 0) - new Date(b.startTime || 0));
+};
+
+const loadMeetings = async () => {
+  meetingsLoading.value = true;
+  try {
+    const data = await getMeetings();
+    meetings.value = normalizeMeetings(data);
+  } catch (error) {
+    console.error('Error loading meetings:', error);
+    meetings.value = [];
+    toast.add({ severity: 'error', summary: t('team.toast.error'), detail: t('team.toast.couldNotLoadMeetings'), life: 4000 });
+  } finally {
+    meetingsLoading.value = false;
+  }
+};
+
+const openMeetingsModal = async (participantIds = []) => {
+  showMeetingsModal.value = true;
+  selectedMeeting.value = null;
+  resetMeetingForm(participantIds);
+  await loadMeetings();
+};
+
+const closeMeetingsModal = () => {
+  if (savingMeeting.value) return;
+  showMeetingsModal.value = false;
+  selectedMeeting.value = null;
+  resetMeetingForm();
+};
+
+const validateMeetingForm = () => {
+  if (!meetingForm.value.title.trim()) return t('team.toast.meetingTitleRequired');
+  if (!meetingForm.value.startTime || !meetingForm.value.endTime) return t('team.toast.meetingTimeRequired');
+
+  const start = new Date(meetingForm.value.startTime);
+  const end = new Date(meetingForm.value.endTime);
+  if (end <= start) return t('team.toast.meetingEndAfterStart');
+  if (meetingForm.value.participantIds.length === 0) return t('team.toast.meetingParticipantsRequired');
+
+  const allowedIds = new Set(participantOptions.value.map(member => Number(member.id)));
+  const hasInvalidParticipant = meetingForm.value.participantIds.some(id => !allowedIds.has(Number(id)));
+  if (hasInvalidParticipant) return t('team.toast.onlyProjectMembers');
+
+  return '';
+};
+
+const saveMeeting = async () => {
+  if (!isLeader.value || savingMeeting.value) return;
+
+  const validationMessage = validateMeetingForm();
+  if (validationMessage) {
+    toast.add({ severity: 'warn', summary: t('team.toast.checkMeeting'), detail: validationMessage, life: 3500 });
     return;
   }
 
-  const attendees = emails.join(',');
-  const subject = encodeURIComponent(`Group Meeting: ${props.project.name}`);
-  const teamsUrl = `https://teams.microsoft.com/l/meeting/new?subject=${subject}&attendees=${attendees}`;
-  window.open(teamsUrl, '_blank');
-  cancelSelectionMode();
+  savingMeeting.value = true;
+  const payload = {
+    title: meetingForm.value.title.trim(),
+    description: meetingForm.value.description.trim(),
+    startTime: toIsoString(meetingForm.value.startTime),
+    endTime: toIsoString(meetingForm.value.endTime),
+    participantIds: meetingForm.value.participantIds.map(Number)
+  };
+
+  try {
+    if (editingMeetingId.value) {
+      await updateMeeting(editingMeetingId.value, payload);
+      toast.add({ severity: 'success', summary: t('team.toast.meetingUpdated'), life: 3000 });
+    } else {
+      await createMeeting(payload);
+      toast.add({ severity: 'success', summary: t('team.toast.meetingCreated'), life: 3000 });
+    }
+
+    resetMeetingForm();
+    await loadMeetings();
+  } catch (error) {
+    console.error('Error saving meeting:', error);
+    const detail = error.response?.data?.message || error.response?.data || t('team.toast.couldNotSaveMeeting');
+    toast.add({ severity: 'error', summary: t('team.toast.error'), detail, life: 4000 });
+  } finally {
+    savingMeeting.value = false;
+  }
+};
+
+const editMeeting = (meeting) => {
+  editingMeetingId.value = meeting.meetingId;
+  selectedMeeting.value = null;
+  meetingForm.value = {
+    title: meeting.title || '',
+    description: meeting.description || '',
+    startTime: toDatetimeLocal(meeting.startTime),
+    endTime: toDatetimeLocal(meeting.endTime),
+    participantIds: Array.isArray(meeting.participantIds) ? meeting.participantIds.map(Number) : []
+  };
+};
+
+const viewMeeting = async (meetingId) => {
+  try {
+    selectedMeeting.value = await getMeetingById(meetingId);
+  } catch (error) {
+    console.error('Error loading meeting detail:', error);
+    toast.add({ severity: 'error', summary: t('team.toast.error'), detail: t('team.toast.couldNotLoadMeeting'), life: 4000 });
+  }
+};
+
+const removeMeeting = async (meetingId) => {
+  try {
+    await deleteMeeting(meetingId);
+    if (editingMeetingId.value === meetingId) resetMeetingForm();
+    if (selectedMeeting.value?.meetingId === meetingId) selectedMeeting.value = null;
+    meetings.value = meetings.value.filter(meeting => meeting.meetingId !== meetingId);
+    toast.add({ severity: 'success', summary: t('team.toast.meetingDeleted'), life: 3000 });
+  } catch (error) {
+    console.error('Error deleting meeting:', error);
+    const detail = error.response?.data?.message || error.response?.data || t('team.toast.couldNotDeleteMeeting');
+    toast.add({ severity: 'error', summary: t('team.toast.error'), detail, life: 4000 });
+  }
+};
+
+const getParticipantName = (participantId) => {
+  const member = teamMembers.value.find(item => Number(item.id) === Number(participantId));
+  return member ? `${member.name || ''} ${member.lastName || ''}`.trim() || member.email : `#${participantId}`;
+};
+
+const formatMeetingDate = (startTime, endTime) => {
+  if (!startTime || !endTime) return t('team.meetingDatePending');
+
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return t('team.meetingDatePending');
+
+  const today = new Date();
+  const isToday = start.toDateString() === today.toDateString();
+  const dayLabel = isToday
+      ? t('team.today')
+      : start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const startLabel = start.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const endLabel = end.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
+  return `${dayLabel} · ${startLabel} - ${endLabel}`;
 };
 
 const goBackToProjects = () => {
@@ -233,7 +429,7 @@ onBeforeUnmount(() => {
               @click="startSelectionMode"
           >
             <i class="pi pi-calendar-plus mr-2"></i>
-            {{ $t('team.planGroupMeeting') }}
+            {{ $t('team.meetings') }}
           </pv-button>
 
           <pv-button
@@ -302,6 +498,133 @@ onBeforeUnmount(() => {
             <i class="pi pi-video mr-2"></i>
             {{ $t('team.scheduleIndividualMeeting') }}
           </pv-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="popup" v-if="showMeetingsModal">
+      <div class="meetings-modal bg-white shadow-1">
+        <div class="meetings-header">
+          <div>
+            <p class="meetings-kicker">{{ project.name }}</p>
+            <h2 class="meetings-title">{{ $t('team.meetings') }}</h2>
+          </div>
+          <button class="icon-button" type="button" @click="closeMeetingsModal" :aria-label="$t('team.close')">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+
+        <div class="meetings-grid">
+          <section class="meeting-panel">
+            <div class="panel-heading">
+              <h3>{{ editingMeetingId ? $t('team.editMeeting') : $t('team.createMeeting') }}</h3>
+              <button v-if="editingMeetingId" class="text-action" type="button" @click="resetMeetingForm()">
+                {{ $t('team.clear') }}
+              </button>
+            </div>
+
+            <form v-if="isLeader" class="meeting-form" @submit.prevent="saveMeeting">
+              <label class="field-label" for="meeting-title">{{ $t('team.meetingTitle') }}</label>
+              <input id="meeting-title" class="field-input" type="text" v-model="meetingForm.title" placeholder="Sprint Review" />
+
+              <label class="field-label" for="meeting-description">{{ $t('team.meetingDescription') }}</label>
+              <textarea id="meeting-description" class="field-input field-textarea" v-model="meetingForm.description" placeholder="Review sprint progress"></textarea>
+
+              <div class="time-grid">
+                <div>
+                  <label class="field-label" for="meeting-start">{{ $t('team.startTime') }}</label>
+                  <input id="meeting-start" class="field-input" type="datetime-local" v-model="meetingForm.startTime" />
+                </div>
+                <div>
+                  <label class="field-label" for="meeting-end">{{ $t('team.endTime') }}</label>
+                  <input id="meeting-end" class="field-input" type="datetime-local" v-model="meetingForm.endTime" />
+                </div>
+              </div>
+
+              <div class="participants-header">
+                <label class="field-label">{{ $t('team.participants') }}</label>
+                <span class="participant-count">{{ meetingForm.participantIds.length }}</span>
+              </div>
+              <div class="participants-list">
+                <label
+                    v-for="participant in participantOptions"
+                    :key="participant.id"
+                    class="participant-option"
+                >
+                  <input
+                      type="checkbox"
+                      :value="participant.id"
+                      v-model="meetingForm.participantIds"
+                  />
+                  <span>
+                    <strong>{{ participant.name }}</strong>
+                    <small>{{ participant.email }}</small>
+                  </span>
+                </label>
+              </div>
+
+              <pv-button class="save-meeting-btn" type="submit" :disabled="savingMeeting">
+                <i class="pi pi-check mr-2"></i>
+                {{ savingMeeting ? $t('team.saving') : (editingMeetingId ? $t('team.updateMeeting') : $t('team.createMeeting')) }}
+              </pv-button>
+            </form>
+
+            <div v-else class="member-meeting-note">
+              <i class="pi pi-info-circle"></i>
+              <p>{{ $t('team.membersCanOnlyViewMeetings') }}</p>
+            </div>
+          </section>
+
+          <section class="meeting-panel">
+            <div class="panel-heading">
+              <h3>{{ $t('team.upcomingMeetings') }}</h3>
+              <button class="text-action" type="button" @click="loadMeetings">
+                {{ $t('team.refresh') }}
+              </button>
+            </div>
+
+            <div v-if="meetingsLoading" class="empty-meetings">{{ $t('team.loadingMeetings') }}</div>
+            <div v-else-if="meetings.length === 0" class="empty-meetings">{{ $t('team.noUpcomingMeetings') }}</div>
+
+            <div v-else class="meeting-cards">
+              <article v-for="meeting in meetings" :key="meeting.meetingId" class="meeting-card">
+                <div class="meeting-card-header">
+                  <div>
+                    <h4>{{ meeting.title }}</h4>
+                    <p>{{ formatMeetingDate(meeting.startTime, meeting.endTime) }}</p>
+                  </div>
+                  <span class="status-pill">{{ meeting.status || 'SCHEDULED' }}</span>
+                </div>
+                <p class="meeting-description">{{ meeting.description || $t('team.noDescriptionProvided') }}</p>
+                <div class="meeting-meta">
+                  <span>{{ $t('team.participantsCount', { count: meeting.participantIds?.length || 0 }) }}</span>
+                  <span v-if="meeting.meetLink">
+                    <a :href="meeting.meetLink" target="_blank" rel="noopener">{{ $t('team.joinMeeting') }}</a>
+                  </span>
+                  <span v-else>{{ $t('team.googleMeetNotConnected') }}</span>
+                </div>
+                <div class="meeting-actions">
+                  <button type="button" @click="viewMeeting(meeting.meetingId)">{{ $t('team.view') }}</button>
+                  <button v-if="isLeader" type="button" @click="editMeeting(meeting)">{{ $t('team.edit') }}</button>
+                  <button v-if="isLeader" type="button" class="danger-action" @click="removeMeeting(meeting.meetingId)">{{ $t('team.delete') }}</button>
+                </div>
+              </article>
+            </div>
+
+            <div v-if="selectedMeeting" class="meeting-detail">
+              <div class="panel-heading">
+                <h3>{{ selectedMeeting.title }}</h3>
+                <button class="text-action" type="button" @click="selectedMeeting = null">{{ $t('team.close') }}</button>
+              </div>
+              <p>{{ selectedMeeting.description || $t('team.noDescriptionProvided') }}</p>
+              <p class="meeting-date-detail">{{ formatMeetingDate(selectedMeeting.startTime, selectedMeeting.endTime) }}</p>
+              <div class="detail-participants">
+                <span v-for="participantId in selectedMeeting.participantIds || []" :key="participantId">
+                  {{ getParticipantName(participantId) }}
+                </span>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -488,6 +811,261 @@ onBeforeUnmount(() => {
   border-radius: 16px;
 }
 
+.meetings-modal {
+  width: min(1120px, calc(100vw - 2rem));
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.meetings-header,
+.panel-heading,
+.meeting-card-header,
+.meeting-actions,
+.meetings-grid,
+.time-grid,
+.participants-header {
+  display: flex;
+}
+
+.meetings-header,
+.panel-heading,
+.meeting-card-header,
+.participants-header {
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.meetings-kicker {
+  margin: 0 0 0.2rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.meetings-title,
+.panel-heading h3 {
+  margin: 0;
+  color: #b22222;
+  font-family: 'Lora', serif;
+}
+
+.meetings-grid {
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.meeting-panel {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.meeting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.field-label {
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.field-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+}
+
+.field-textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.time-grid {
+  gap: 0.75rem;
+}
+
+.time-grid > div {
+  flex: 1;
+}
+
+.participants-list,
+.meeting-cards,
+.detail-participants {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.participants-list {
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.participant-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.65rem;
+  cursor: pointer;
+}
+
+.participant-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: #b22222;
+}
+
+.participant-option span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.participant-option small {
+  color: #6b7280;
+  overflow-wrap: anywhere;
+}
+
+.participant-count,
+.status-pill {
+  background: rgba(178, 34, 34, 0.1);
+  color: #b22222;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.save-meeting-btn {
+  justify-content: center;
+  background: #b22222;
+  border: 0;
+  color: #ffffff;
+  margin-top: 0.35rem;
+}
+
+.icon-button,
+.text-action,
+.meeting-actions button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #b22222;
+  font-weight: 700;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.icon-button:hover,
+.text-action:hover,
+.meeting-actions button:hover {
+  background: rgba(178, 34, 34, 0.08);
+}
+
+.empty-meetings,
+.member-meeting-note {
+  margin-top: 1rem;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 1rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.member-meeting-note i {
+  color: #b22222;
+  font-size: 1.35rem;
+}
+
+.meeting-card,
+.meeting-detail {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.85rem;
+}
+
+.meeting-card h4 {
+  margin: 0 0 0.25rem;
+  color: #1f2937;
+}
+
+.meeting-card p,
+.meeting-detail p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.meeting-description {
+  margin-top: 0.65rem !important;
+}
+
+.meeting-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  color: #4b5563;
+  font-size: 0.85rem;
+}
+
+.meeting-meta a {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.meeting-actions {
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.danger-action {
+  color: #dc2626 !important;
+}
+
+.meeting-detail {
+  margin-top: 1rem;
+  background: #f9fafb;
+}
+
+.meeting-date-detail {
+  margin-top: 0.5rem !important;
+  font-weight: 700;
+}
+
+.detail-participants {
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.detail-participants span {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  color: #374151;
+  font-size: 0.82rem;
+}
+
 .popup__content-title {
   font-family: 'Lora', serif;
   color: #b22222;
@@ -576,7 +1154,8 @@ onBeforeUnmount(() => {
 }
 
 .dark-team-members .floating-action-bar,
-.dark-team-members .popup__content {
+.dark-team-members .popup__content,
+.dark-team-members .meetings-modal {
   background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98)) !important;
   border: 1px solid rgba(244, 63, 115, 0.24);
   color: #eef2f8;
@@ -584,24 +1163,56 @@ onBeforeUnmount(() => {
 }
 
 .dark-team-members .selection-text,
-.dark-team-members .popup__content-title {
+.dark-team-members .popup__content-title,
+.dark-team-members .meetings-title,
+.dark-team-members .panel-heading h3 {
   color: #eef2f8;
 }
 
 .dark-team-members .popup__member-email,
 .dark-team-members .popup__member-description,
-.dark-team-members .text-gray-500 {
+.dark-team-members .text-gray-500,
+.dark-team-members .meetings-kicker,
+.dark-team-members .field-label,
+.dark-team-members .participant-option small,
+.dark-team-members .meeting-card p,
+.dark-team-members .meeting-detail p,
+.dark-team-members .meeting-meta,
+.dark-team-members .empty-meetings,
+.dark-team-members .member-meeting-note {
   color: #a7b0bf !important;
 }
 
-.dark-team-members .message-textarea {
+.dark-team-members .message-textarea,
+.dark-team-members .field-input {
   background: #10141d;
   border-color: #242a36;
   color: #eef2f8;
 }
 
-.dark-team-members .message-textarea::placeholder {
+.dark-team-members .message-textarea::placeholder,
+.dark-team-members .field-input::placeholder {
   color: #7d8798;
+}
+
+.dark-team-members .meeting-panel,
+.dark-team-members .meeting-card,
+.dark-team-members .participant-option,
+.dark-team-members .empty-meetings,
+.dark-team-members .member-meeting-note,
+.dark-team-members .meeting-detail {
+  background: rgba(16, 20, 29, 0.72);
+  border-color: #242a36;
+}
+
+.dark-team-members .meeting-card h4 {
+  color: #eef2f8;
+}
+
+.dark-team-members .detail-participants span {
+  background: #10141d;
+  border-color: #242a36;
+  color: #eef2f8;
 }
 
 .dark-team-members :deep(.team-member-card) {
@@ -659,6 +1270,16 @@ onBeforeUnmount(() => {
     right: 1rem;
     left: 1rem;
     justify-content: space-between;
+  }
+
+  .meetings-grid,
+  .time-grid {
+    flex-direction: column;
+  }
+
+  .meeting-card-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

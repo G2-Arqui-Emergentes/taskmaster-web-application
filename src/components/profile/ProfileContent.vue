@@ -30,6 +30,11 @@ export default {
       currentTheme: document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light',
       passwordLastUpdated: this.$t('profile.notUpdatedInSession'),
       passwordSubmitting: false,
+      googleCalendar: {
+        loading: false,
+        connected: false,
+        googleEmail: ''
+      },
       refreshKey: 0
     };
   },
@@ -93,6 +98,49 @@ export default {
     },
     openChangePassword() {
       this.showPasswordModal = true;
+    },
+    connectGoogleCalendar() {
+      const token = this.userService.normalizeToken(localStorage.getItem('token'));
+
+      if (!token) {
+        console.error('[Google Calendar] Cannot open OAuth popup because there is no auth token');
+        return;
+      }
+
+      console.log('[Google Calendar] Opening OAuth popup');
+      const popup = window.open(
+          `https://backend-taskmaster-1.onrender.com/api/v1/google/connect?token=${encodeURIComponent(token)}`,
+          "google-calendar-connect",
+          "width=500,height=650"
+      );
+
+      if (!popup) {
+        console.error('[Google Calendar] Popup blocked or could not be opened');
+      }
+    },
+    handleGoogleMessage(event) {
+      console.log('[Google Calendar] Message received:', event.origin, event.data);
+      if (event.data?.type === "GOOGLE_CONNECTED") {
+        console.log('[Google Calendar] Connection message received, refreshing status');
+        this.fetchGoogleCalendarStatus();
+      }
+    },
+    async fetchGoogleCalendarStatus() {
+      console.log('[Google Calendar] Checking connection status');
+      this.googleCalendar.loading = true;
+      try {
+        const headers = this.userService.getHeadersAuthorization();
+        const response = await this.userService.http.get('/api/v1/google/status', { headers });
+        console.log('[Google Calendar] Status response:', response.data);
+        this.googleCalendar.connected = Boolean(response.data?.connected);
+        this.googleCalendar.googleEmail = response.data?.googleEmail || '';
+      } catch (error) {
+        console.error('[Google Calendar] Status request failed:', error.response?.data || error.message || error);
+        this.googleCalendar.connected = false;
+        this.googleCalendar.googleEmail = '';
+      } finally {
+        this.googleCalendar.loading = false;
+      }
     },
     async updateProfileImage(imageUrl) {
       if (!imageUrl) return;
@@ -173,10 +221,13 @@ export default {
   },
   mounted() {
     this.applyTheme();
+    this.fetchGoogleCalendarStatus();
+    window.addEventListener('message', this.handleGoogleMessage);
     this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
     this.systemThemeQuery.addEventListener('change', this.handleSystemThemeChange);
   },
   beforeUnmount() {
+    window.removeEventListener('message', this.handleGoogleMessage);
     this.systemThemeQuery?.removeEventListener('change', this.handleSystemThemeChange);
   }
 };
@@ -267,6 +318,38 @@ export default {
               </div>
               <i class="pi pi-angle-right option-arrow"></i>
             </div>
+          </div>
+        </div>
+
+        <div class="google-calendar-card">
+          <div class="card-header">
+            <div class="header-left">
+              <i class="pi pi-calendar"></i>
+              <h2 class="card-title">Google Calendar</h2>
+            </div>
+          </div>
+
+          <div class="google-calendar-content">
+            <div class="calendar-status">
+              <span
+                  class="calendar-status-dot"
+                  :class="{ connected: googleCalendar.connected }"
+              ></span>
+              <span v-if="googleCalendar.loading" class="option-subtitle">Checking connection...</span>
+              <span v-else-if="googleCalendar.connected" class="option-subtitle">
+                Connected as {{ googleCalendar.googleEmail }}
+              </span>
+              <span v-else class="option-subtitle">Google Calendar not connected</span>
+            </div>
+
+            <button
+                v-if="!googleCalendar.connected"
+                class="calendar-connect-button"
+                type="button"
+                @click="connectGoogleCalendar"
+            >
+              Connect Google Calendar
+            </button>
           </div>
         </div>
 
@@ -558,6 +641,58 @@ export default {
   gap: 1rem;
 }
 
+.google-calendar-card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #E5BDBE;
+  padding: 1.5rem;
+  flex-shrink: 0;
+}
+
+.google-calendar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.calendar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.calendar-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #906F70;
+  flex-shrink: 0;
+}
+
+.calendar-status-dot.connected {
+  background: #16a34a;
+}
+
+.calendar-connect-button {
+  border: 0;
+  border-radius: 8px;
+  background: #B80035;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0.7rem 1rem;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.calendar-connect-button:hover {
+  background: #E11D48;
+  transform: translateY(-1px);
+}
+
 .security-option-rectangle {
   display: flex;
   justify-content: space-between;
@@ -780,6 +915,7 @@ input:checked + .toggle-slider:before {
 
 .dark-profile .profile-card,
 .dark-profile .security-card,
+.dark-profile .google-calendar-card,
 .dark-profile .notifications-card,
 .dark-profile .appearance-card {
   background: linear-gradient(145deg, rgba(18, 23, 33, 0.98), rgba(10, 14, 22, 0.98));
@@ -822,6 +958,14 @@ input:checked + .toggle-slider:before {
   background-color: #4b5563;
 }
 
+.dark-profile .calendar-connect-button {
+  background: #e11d48;
+}
+
+.dark-profile .calendar-connect-button:hover {
+  background: #ff4f82;
+}
+
 .dark-profile input:checked + .toggle-slider {
   background-color: #ff4f82;
 }
@@ -842,6 +986,11 @@ input:checked + .toggle-slider:before {
   }
 
   .bottom-row {
+    flex-direction: column;
+  }
+
+  .google-calendar-content {
+    align-items: flex-start;
     flex-direction: column;
   }
 }
