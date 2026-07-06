@@ -27,6 +27,7 @@ const isReportModalOpen = ref(false)
 const isReportLoading = ref(false)
 const reportError = ref('')
 const selectedMemberReport = ref(null)
+const selectedPerformanceProjectId = ref('all')
 
 const stats = ref({
   activeProjects: 0,
@@ -43,7 +44,7 @@ const riskData = ref({
   riskLevel: ''
 })
 
-const teamPerformance = ref([])
+const aiMemberPerformances = ref([])
 
 const recentActivities = ref([])
 
@@ -93,6 +94,18 @@ const getMemberById = (userId) => {
 
 const normalizeStatus = (status) => String(status || '').toUpperCase()
 
+const getAssignedUserIds = (task) => {
+  if (Array.isArray(task.assignedUserIds)) return task.assignedUserIds.map(Number)
+  if (Array.isArray(task.assignees)) return task.assignees.map(user => Number(user?.id || user))
+  return [task.assignedUserId, task.userId, task.assignedID]
+    .filter(value => value !== undefined && value !== null)
+    .map(Number)
+}
+
+const isTaskAssignedToMember = (task, memberId) => {
+  return getAssignedUserIds(task).includes(Number(memberId))
+}
+
 const getTaskDeadline = (task) => task.endDate || task.deadline || task.dueDate || null
 
 const isTaskOverdue = (task) => {
@@ -124,6 +137,74 @@ const formatPerformanceLevel = (level) => {
   if (!normalized) return t('home.leader.noPerformanceLevel')
   return normalized.charAt(0).toUpperCase() + normalized.slice(1)
 }
+
+const getCalculatedPerformanceLabel = (score, totalTasks) => {
+  if (totalTasks === 0) return t('home.leader.noPerformanceLevel')
+  if (score >= 85) return t('home.leader.highPerformance')
+  if (score < 70) return t('home.leader.lowPerformance')
+  return t('home.leader.stablePerformance')
+}
+
+const performanceProjectTabs = computed(() => [
+  { id: 'all', name: t('home.leader.allProjects') },
+  ...projects.value.map(project => ({
+    id: Number(project.projectId),
+    name: project.name || t('home.leader.unnamedProject')
+  }))
+])
+
+const selectedProjectName = computed(() => {
+  return performanceProjectTabs.value.find(project => project.id === selectedPerformanceProjectId.value)?.name
+    || t('home.leader.allProjects')
+})
+
+const selectedProjectPerformance = computed(() => {
+  const selectedProjectId = selectedPerformanceProjectId.value
+  const projectIdNumber = Number(selectedProjectId)
+  const isAllProjects = selectedProjectId === 'all'
+
+  return teamMembers.value
+    .filter(member => {
+      if (isAllProjects) return true
+      return member.projectIds.includes(projectIdNumber)
+    })
+    .map(member => {
+      const memberTasks = allTasks.value.filter(task => {
+        const belongsToProject = isAllProjects || Number(task.projectId) === projectIdNumber
+        return belongsToProject && isTaskAssignedToMember(task, member.id)
+      })
+      const tasksCompleted = memberTasks.filter(task => normalizeStatus(task.status) === 'DONE').length
+      const tasksDelayed = memberTasks.filter(isTaskOverdue).length
+      const totalTasks = memberTasks.length
+      const score = totalTasks > 0
+        ? Math.max(0, Math.round(((tasksCompleted - tasksDelayed) / totalTasks) * 100))
+        : 0
+      const aiPerformance = aiMemberPerformances.value.find(item => Number(item.userId) === Number(member.id))
+      const performanceLabel = isAllProjects && aiPerformance?.performanceLevel
+        ? formatPerformanceLevel(aiPerformance.performanceLevel)
+        : getCalculatedPerformanceLabel(score, totalTasks)
+      const effectiveScore = isAllProjects && Number.isFinite(Number(aiPerformance?.score))
+        ? Number(aiPerformance.score)
+        : score
+
+      return {
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        avatar: member.avatar,
+        score: effectiveScore,
+        tasksCompleted: isAllProjects && Number.isFinite(Number(aiPerformance?.tasksCompleted))
+          ? Number(aiPerformance.tasksCompleted)
+          : tasksCompleted,
+        tasksDelayed: isAllProjects && Number.isFinite(Number(aiPerformance?.tasksDelayed))
+          ? Number(aiPerformance.tasksDelayed)
+          : tasksDelayed,
+        totalTasks,
+        performanceLabel,
+        performanceClass: getPerformanceClass(performanceLabel, effectiveScore)
+      }
+    })
+})
 
 const getUserRoleLabel = (user) => {
   const firstRole = Array.isArray(user.roles) ? user.roles[0] : user.roles
@@ -238,27 +319,14 @@ const loadLeaderAiDashboard = async () => {
       riskLevel: topRiskProject.value?.riskLevel || ''
     }
 
-    teamPerformance.value = Array.isArray(dashboard?.memberPerformances)
-      ? dashboard.memberPerformances.map(member => {
-        const user = getMemberById(member.userId)
-        const score = Number(member.score) || 0
-        return {
-          id: member.userId,
-          name: member.userName || user?.name || t('home.member.fallbackName'),
-          avatar: user?.avatar || '',
-          score,
-          tasksCompleted: Number(member.tasksCompleted) || 0,
-          tasksDelayed: Number(member.tasksDelayed) || 0,
-          performanceLabel: member.performanceLevel || t('home.leader.noPerformanceLevel'),
-          performanceClass: getPerformanceClass(member.performanceLevel, score)
-        }
-      })
+    aiMemberPerformances.value = Array.isArray(dashboard?.memberPerformances)
+      ? dashboard.memberPerformances
       : []
   } catch (error) {
     console.error('Error loading AI leader dashboard:', error.response?.data || error)
     topRiskProject.value = null
     recommendations.value = []
-    teamPerformance.value = []
+    aiMemberPerformances.value = []
     generatedAt.value = t('home.common.notGeneratedYet')
     stats.value.highRiskProjects = 0
     riskData.value = {
@@ -296,7 +364,8 @@ const loadTeamMembers = async () => {
         id: user.id,
         name: `${user.name || ''} ${user.lastName || ''}`.trim() || user.email || t('home.member.fallbackName'),
         email: user.email || '',
-        avatar: user.imageUrl || ''
+        avatar: user.imageUrl || '',
+        projectIds: Array.isArray(user.projectIds) ? user.projectIds.map(Number) : []
       }))
   } catch (error) {
     console.error('Error loading team members:', error.response?.data || error)
@@ -501,13 +570,31 @@ onBeforeUnmount(() => {
 
         <div class="section-card performance-card">
           <div class="performance-header">
-            <h3>{{ $t('home.leader.performancePerMember') }}</h3>
-            <span class="performance-sub">{{ $t('home.leader.performanceSubtitle') }}</span>
+            <div>
+              <h3>{{ $t('home.leader.performancePerMember') }}</h3>
+              <span class="performance-sub">{{ $t('home.leader.performanceSubtitle') }}</span>
+            </div>
+            <span class="performance-project-name">{{ selectedProjectName }}</span>
+          </div>
+
+          <div class="project-tabs" role="tablist" :aria-label="$t('home.leader.performanceProjectTabs')">
+            <button
+              v-for="project in performanceProjectTabs"
+              :key="project.id"
+              type="button"
+              class="project-tab"
+              :class="{ active: selectedPerformanceProjectId === project.id }"
+              role="tab"
+              :aria-selected="selectedPerformanceProjectId === project.id"
+              @click="selectedPerformanceProjectId = project.id"
+            >
+              {{ project.name }}
+            </button>
           </div>
 
           <div class="members-list">
-            <p v-if="teamPerformance.length === 0" class="empty-state">{{ $t('home.leader.noMemberPerformance') }}</p>
-            <div v-for="member in teamPerformance" :key="member.id" class="member-row">
+            <p v-if="selectedProjectPerformance.length === 0" class="empty-state">{{ $t('home.leader.noMemberPerformance') }}</p>
+            <div v-for="member in selectedProjectPerformance" :key="member.id" class="member-row">
               <img v-if="member.avatar" :src="member.avatar" class="member-avatar" />
               <div v-else class="member-avatar member-initials">{{ getMemberInitials(member) }}</div>
               <div class="member-info">
@@ -971,6 +1058,10 @@ onBeforeUnmount(() => {
 }
 
 .performance-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
@@ -984,6 +1075,53 @@ onBeforeUnmount(() => {
 .performance-sub {
   font-size: 12px;
   color: #6B7280;
+}
+
+.performance-project-name {
+  max-width: 180px;
+  color: #C2185B;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.project-tab {
+  flex: 0 0 auto;
+  max-width: 180px;
+  border: 1px solid #F3D3D9;
+  background: #FFFFFF;
+  color: #6B7280;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.project-tab:hover {
+  border-color: #C2185B;
+  color: #C2185B;
+}
+
+.project-tab.active {
+  background: #C2185B;
+  border-color: #C2185B;
+  color: #FFFFFF;
 }
 
 .members-list {
@@ -1550,6 +1688,15 @@ onBeforeUnmount(() => {
     flex-wrap: wrap;
   }
 
+  .performance-header {
+    flex-direction: column;
+  }
+
+  .performance-project-name {
+    max-width: 100%;
+    text-align: left;
+  }
+
   .generate-report-btn {
     width: 100%;
     justify-content: center;
@@ -1632,6 +1779,27 @@ onBeforeUnmount(() => {
 
 .dark-dashboard .member-row {
   background: rgba(15, 20, 30, 0.92);
+}
+
+.dark-dashboard .project-tab {
+  background: rgba(15, 20, 30, 0.92);
+  border-color: rgba(244, 63, 115, 0.22);
+  color: #a7b0bf;
+}
+
+.dark-dashboard .project-tab:hover {
+  border-color: rgba(244, 63, 115, 0.5);
+  color: #ff8cae;
+}
+
+.dark-dashboard .project-tab.active {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #ffffff;
+}
+
+.dark-dashboard .performance-project-name {
+  color: #ff8cae;
 }
 
 .dark-dashboard .member-row:hover {

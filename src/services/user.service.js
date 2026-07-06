@@ -121,13 +121,20 @@ export class UserService {
 
         const userbody = {
             name: (user.name ?? "").toString().trim(),
-            lastName: (user.lastName ?? "").toString().trim(),
-            imageUrl: (user.imageUrl ?? "").toString().trim(),
-            salary: user.salary ?? 0,
-            phone: (user.phone ?? "").toString().trim(),
-            age: user.age ?? null,
-            bio: (user.bio ?? "").toString().trim()
+            lastName: (user.lastName ?? "").toString().trim()
         };
+
+        const imageUrl = (user.imageUrl ?? "").toString().trim();
+        const phone = (user.phone ?? "").toString().trim();
+        const bio = (user.bio ?? "").toString().trim();
+        const salary = Number(user.salary);
+        const age = Number(user.age);
+
+        if (imageUrl) userbody.imageUrl = imageUrl;
+        if (Number.isFinite(salary) && salary >= 0) userbody.salary = salary;
+        if (phone) userbody.phone = phone;
+        if (Number.isFinite(age) && age > 0) userbody.age = age;
+        if (bio) userbody.bio = bio;
 
         try {
             const resp = await this.http.put(`/api/v1/users`, userbody, { headers });

@@ -815,9 +815,9 @@ onBeforeUnmount(() => {
 
 .welcome-card {
   background:
-    radial-gradient(circle at 82% 35%, rgba(230, 46, 101, 0.12), transparent 28%),
-    linear-gradient(135deg, #0B101B 0%, #090D16 58%, #111827 100%);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+    radial-gradient(circle at 82% 35%, rgba(230, 46, 101, 0.1), transparent 28%),
+    linear-gradient(135deg, #FFFFFF 0%, #FFF7F9 58%, #F8FAFC 100%);
+  border: 1px solid #FFCDCD;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
@@ -839,7 +839,7 @@ onBeforeUnmount(() => {
 .welcome-title {
   font-size: 30px;
   font-weight: 800;
-  color: #F8FAFC;
+  color: #111827;
   margin: 0 0 8px 0;
   line-height: 1.15;
 }
@@ -851,7 +851,7 @@ onBeforeUnmount(() => {
 .welcome-subtitle {
   font-size: 15px;
   font-weight: 500;
-  color: #A7B0BF;
+  color: #6B7280;
   margin: 0;
 }
 
@@ -883,7 +883,7 @@ onBeforeUnmount(() => {
 
 .welcome-metric-icon.muted {
   background: rgba(148, 163, 184, 0.12);
-  color: #CBD5E1;
+  color: #64748B;
 }
 
 .welcome-metric-icon i {
@@ -903,7 +903,7 @@ onBeforeUnmount(() => {
   display: block;
   font-size: 11px;
   font-weight: 800;
-  color: #E5E7EB;
+  color: #4B5563;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -943,7 +943,7 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -50%);
   font-size: 27px;
   font-weight: 800;
-  color: #F8FAFC;
+  color: #111827;
 }
 
 .progress-percent span {
@@ -962,7 +962,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #A7B0BF;
+  color: #6B7280;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.5px;
@@ -970,7 +970,7 @@ onBeforeUnmount(() => {
 
 .velocity-label-row i {
   font-size: 14px;
-  color: #7E8797;
+  color: #94A3B8;
 }
 
 .velocity-badge {
@@ -998,7 +998,7 @@ onBeforeUnmount(() => {
 
 .velocity-badge.neutral {
   background: rgba(148, 163, 184, 0.16);
-  color: #CBD5E1;
+  color: #64748B;
 }
 
 .velocity-trend {
@@ -1019,8 +1019,8 @@ onBeforeUnmount(() => {
   background:
     radial-gradient(circle at 12% 25%, rgba(59, 130, 246, 0.08), transparent 22%),
     radial-gradient(circle at 68% 18%, rgba(244, 63, 117, 0.08), transparent 25%),
-    linear-gradient(135deg, #0B101B 0%, #090D16 58%, #111827 100%);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+    linear-gradient(135deg, #FFFFFF 0%, #FFF7F9 58%, #F8FAFC 100%);
+  border: 1px solid #FFCDCD;
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
@@ -1040,7 +1040,7 @@ onBeforeUnmount(() => {
 
 .weekly-progress-header h3 {
   margin: 0;
-  color: #F8FAFC;
+  color: #111827;
   font-size: 30px;
   font-weight: 800;
   line-height: 1.2;
@@ -1091,20 +1091,20 @@ onBeforeUnmount(() => {
 }
 
 .weekly-metric-value {
-  color: #F8FAFC;
+  color: #111827;
   font-size: 42px;
   font-weight: 800;
   line-height: 1;
 }
 
 .weekly-metric-label {
-  color: #E2E8F0;
+  color: #4B5563;
   font-size: 16px;
   font-weight: 600;
 }
 
 .weekly-metric-helper {
-  color: #94A3B8;
+  color: #6B7280;
   font-size: 14px;
   font-weight: 500;
 }
@@ -1262,8 +1262,8 @@ onBeforeUnmount(() => {
   background:
     radial-gradient(circle at 12% 25%, rgba(59, 130, 246, 0.08), transparent 22%),
     radial-gradient(circle at 68% 18%, rgba(244, 63, 117, 0.08), transparent 25%),
-    linear-gradient(135deg, #0B101B 0%, #090D16 58%, #111827 100%);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+    linear-gradient(135deg, #FFFFFF 0%, #FFF7F9 58%, #F8FAFC 100%);
+  border: 1px solid #FFCDCD;
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
@@ -1272,7 +1272,7 @@ onBeforeUnmount(() => {
 }
 
 .side-card {
-  color: #e5e7eb;
+  color: #111827;
 }
 
 .deadlines-header {
@@ -1285,7 +1285,7 @@ onBeforeUnmount(() => {
 .deadlines-header h3 {
   font-size: 18px;
   font-weight: 700;
-  color: #F8FAFC;
+  color: #111827;
   margin: 0;
 }
 
@@ -1314,7 +1314,7 @@ onBeforeUnmount(() => {
 }
 
 .deadline-item:hover {
-  background: rgba(15, 20, 30, 0.7);
+  background: #FFF5F7;
 }
 
 .deadline-main {
@@ -1368,14 +1368,14 @@ onBeforeUnmount(() => {
 .task-title {
   font-size: 27px;
   font-weight: 800;
-  color: #F8FAFC;
+  color: #111827;
   margin-bottom: 4px;
 }
 
 .task-description {
   font-size: 21px;
   font-weight: 600;
-  color: #60A5FA;
+  color: #5A78D1;
   line-height: 1.4;
 }
 
@@ -1400,8 +1400,8 @@ onBeforeUnmount(() => {
   background:
     radial-gradient(circle at 12% 25%, rgba(59, 130, 246, 0.08), transparent 22%),
     radial-gradient(circle at 68% 18%, rgba(244, 63, 117, 0.08), transparent 25%),
-    linear-gradient(135deg, #0B101B 0%, #090D16 58%, #111827 100%);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+    linear-gradient(135deg, #FFFFFF 0%, #FFF7F9 58%, #F8FAFC 100%);
+  border: 1px solid #FFCDCD;
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
@@ -1414,10 +1414,10 @@ onBeforeUnmount(() => {
 }
 
 .project-side-item {
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid #F3D3D9;
   border-radius: 14px;
   padding: 12px;
-  background: rgba(15, 20, 30, 0.65);
+  background: #FFFFFF;
 }
 
 .project-side-top {
@@ -1447,7 +1447,7 @@ onBeforeUnmount(() => {
 
 .project-side-main h4 {
   margin: 0;
-  color: #F8FAFC;
+  color: #111827;
   font-size: 23px;
   font-weight: 700;
 }
@@ -1457,7 +1457,7 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #94A3B8;
+  color: #6B7280;
   font-size: 12px;
   font-weight: 700;
 }
@@ -1746,6 +1746,8 @@ onBeforeUnmount(() => {
 
 .dark-dashboard .welcome-subtitle,
 .dark-dashboard .metric-label,
+.dark-dashboard .metric-helper,
+.dark-dashboard .velocity-label-row,
 .dark-dashboard .velocity-label,
 .dark-dashboard .suggestions-title,
 .dark-dashboard .task-description,
@@ -1853,8 +1855,37 @@ onBeforeUnmount(() => {
 }
 
 .dark-dashboard .weekly-progress-card {
+  background:
+    radial-gradient(circle at 12% 25%, rgba(59, 130, 246, 0.08), transparent 22%),
+    radial-gradient(circle at 68% 18%, rgba(244, 63, 117, 0.08), transparent 25%),
+    linear-gradient(135deg, #0B101B 0%, #090D16 58%, #111827 100%);
   border-color: rgba(244, 63, 115, 0.28);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.dark-dashboard .weekly-progress-header h3,
+.dark-dashboard .weekly-metric-value {
+  color: #F8FAFC;
+}
+
+.dark-dashboard .weekly-metric-label {
+  color: #E2E8F0;
+}
+
+.dark-dashboard .weekly-metric-helper {
+  color: #94A3B8;
+}
+
+.dark-dashboard .project-side-main h4 {
+  color: #F8FAFC;
+}
+
+.dark-dashboard .project-side-progress-row {
+  color: #94A3B8;
+}
+
+.dark-dashboard .velocity-badge.neutral {
+  color: #CBD5E1;
 }
 
 /* Nuevas cards de Prioridad y Riesgo */
@@ -1867,8 +1898,8 @@ onBeforeUnmount(() => {
 
 .priority-card,
 .risk-card {
-  background: radial-gradient(circle at 75% 25%, rgba(255, 64, 129, 0.08), transparent 45%), #0B101B;
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: radial-gradient(circle at 75% 25%, rgba(255, 64, 129, 0.08), transparent 45%), #FFFFFF;
+  border: 1px solid #FFCDCD;
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
@@ -1878,7 +1909,7 @@ onBeforeUnmount(() => {
 .priority-card:hover,
 .risk-card:hover {
   border-color: rgba(244, 63, 117, 0.35);
-  box-shadow: 0 20px 48px rgba(2, 6, 23, 0.4);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
 .card-header {
@@ -1911,7 +1942,7 @@ onBeforeUnmount(() => {
 .card-title {
   font-size: 16px;
   font-weight: 700;
-  color: #F8FAFC;
+  color: #111827;
   margin: 0;
 }
 
@@ -1922,8 +1953,8 @@ onBeforeUnmount(() => {
 }
 
 .priority-task-panel {
-  background: rgba(23, 29, 43, 0.92);
-  border: 1px solid rgba(244, 63, 117, 0.14);
+  background: #FFF7F9;
+  border: 1px solid #F3D3D9;
   border-radius: 14px;
   padding: 14px;
   display: flex;
@@ -1946,7 +1977,7 @@ onBeforeUnmount(() => {
 .task-name {
   font-size: 34px;
   font-weight: 800;
-  color: #F8FAFC;
+  color: #111827;
   line-height: 1.15;
 }
 
@@ -1980,7 +2011,7 @@ onBeforeUnmount(() => {
 .task-description {
   font-size: 13px;
   font-weight: 400;
-  color: #CBD5E1;
+  color: #4B5563;
   line-height: 1.4;
   margin: 0;
 }
@@ -1988,7 +2019,7 @@ onBeforeUnmount(() => {
 .task-insight {
   margin: 0;
   font-size: 13px;
-  color: #A7B0BF;
+  color: #6B7280;
 }
 
 .go-to-task-btn {
@@ -2064,7 +2095,7 @@ onBeforeUnmount(() => {
 .risk-description {
   font-size: 12px;
   font-weight: 400;
-  color: #CBD5E1;
+  color: #4B5563;
   line-height: 1.4;
   margin: 0;
 }
