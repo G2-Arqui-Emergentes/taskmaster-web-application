@@ -5,6 +5,8 @@
   "send": "Send message",
   "open": "Open Ares chatbot",
   "close": "Close Ares chatbot",
+  "showQuickQuestions": "Show quick questions",
+  "hideQuickQuestions": "Hide quick questions",
   "fallbackResponse": "I received your request, but I could not read a clear answer.",
   "error": "I could not connect to Ares right now. Please try again.",
   "quickQuestions": {

@@ -5,6 +5,8 @@
   "send": "Enviar mensaje",
   "open": "Abrir chatbot Ares",
   "close": "Cerrar chatbot Ares",
+  "showQuickQuestions": "Mostrar preguntas rapidas",
+  "hideQuickQuestions": "Ocultar preguntas rapidas",
   "fallbackResponse": "Recibí tu solicitud, pero no pude leer una respuesta clara.",
   "error": "No pude conectarme con Ares ahora. Inténtalo otra vez.",
   "quickQuestions": {

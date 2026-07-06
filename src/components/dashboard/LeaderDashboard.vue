@@ -28,6 +28,7 @@ const isReportLoading = ref(false)
 const reportError = ref('')
 const selectedMemberReport = ref(null)
 const selectedPerformanceProjectId = ref('all')
+const selectedRiskProjectId = ref('all')
 
 const stats = ref({
   activeProjects: 0,
@@ -132,6 +133,41 @@ const getDominantPriority = (tasks) => {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
 }
 
+const getTaskProjectName = (task) => {
+  const project = projects.value.find(item => Number(item.projectId) === Number(task?.projectId))
+  return project?.name || t('home.leader.unnamedProject')
+}
+
+const calculateRiskSnapshot = (tasks) => {
+  const safeTasks = Array.isArray(tasks) ? tasks : []
+  const totalTasks = safeTasks.length
+  const completedTasks = safeTasks.filter(task => normalizeStatus(task.status) === 'DONE').length
+  const activeTasks = safeTasks.filter(task => normalizeStatus(task.status) !== 'DONE')
+  const overdueTasks = activeTasks.filter(isTaskOverdue).length
+  const highPriorityOpenTasks = activeTasks.filter(task => String(task.priority || '').toUpperCase() === 'HIGH').length
+  const probabilityOfDelay = totalTasks > 0
+    ? Math.min(100, Math.round(((overdueTasks * 1.5 + highPriorityOpenTasks * 0.5) / totalTasks) * 100))
+    : 0
+  const overallEfficiency = totalTasks > 0
+    ? Math.max(0, Math.round(((completedTasks - overdueTasks) / totalTasks) * 100))
+    : 0
+
+  let riskLevel = 'LOW'
+  if (probabilityOfDelay >= 60 || overdueTasks >= 3) riskLevel = 'HIGH'
+  else if (probabilityOfDelay >= 30 || overdueTasks > 0) riskLevel = 'MEDIUM'
+
+  return {
+    totalTasks,
+    completedTasks,
+    activeTasks: activeTasks.length,
+    overdueTasks,
+    highPriorityOpenTasks,
+    probabilityOfDelay,
+    overallEfficiency,
+    riskLevel
+  }
+}
+
 const formatPerformanceLevel = (level) => {
   const normalized = String(level || '').toLowerCase()
   if (!normalized) return t('home.leader.noPerformanceLevel')
@@ -156,6 +192,70 @@ const performanceProjectTabs = computed(() => [
 const selectedProjectName = computed(() => {
   return performanceProjectTabs.value.find(project => project.id === selectedPerformanceProjectId.value)?.name
     || t('home.leader.allProjects')
+})
+
+const riskProjectTabs = computed(() => performanceProjectTabs.value)
+
+const selectedRiskProjectName = computed(() => {
+  return riskProjectTabs.value.find(project => project.id === selectedRiskProjectId.value)?.name
+    || t('home.leader.allProjects')
+})
+
+const selectedRiskTasks = computed(() => {
+  if (selectedRiskProjectId.value === 'all') return allTasks.value
+  return allTasks.value.filter(task => Number(task.projectId) === Number(selectedRiskProjectId.value))
+})
+
+const selectedRiskSnapshot = computed(() => calculateRiskSnapshot(selectedRiskTasks.value))
+
+const selectedRiskProject = computed(() => {
+  if (selectedRiskProjectId.value === 'all') return topRiskProject.value
+  const project = projects.value.find(item => Number(item.projectId) === Number(selectedRiskProjectId.value))
+  const snapshot = selectedRiskSnapshot.value
+  return project
+    ? {
+      name: project.name || t('home.leader.unnamedProject'),
+      status: project.status || snapshot.riskLevel,
+      delayRisk: snapshot.probabilityOfDelay,
+      overallEfficiency: snapshot.overallEfficiency,
+      riskLevel: snapshot.riskLevel
+    }
+    : null
+})
+
+const displayedRiskData = computed(() => {
+  if (selectedRiskProjectId.value === 'all' && topRiskProject.value) {
+    return riskData.value
+  }
+  const snapshot = selectedRiskSnapshot.value
+  return {
+    probabilityOfDelay: snapshot.probabilityOfDelay,
+    overallEfficiency: snapshot.overallEfficiency,
+    riskLevel: snapshot.riskLevel
+  }
+})
+
+const displayedRecommendations = computed(() => {
+  if (selectedRiskProjectId.value === 'all') return recommendations.value
+
+  const snapshot = selectedRiskSnapshot.value
+  const projectName = selectedRiskProjectName.value
+  const localRecommendations = []
+
+  if (snapshot.overdueTasks > 0) {
+    localRecommendations.push(`Revisar ${snapshot.overdueTasks} tareas vencidas en ${projectName} y ajustar responsables o fechas limite.`)
+  }
+  if (snapshot.highPriorityOpenTasks > 0) {
+    localRecommendations.push(`Priorizar ${snapshot.highPriorityOpenTasks} tareas de alta prioridad abiertas antes de abrir nuevo alcance.`)
+  }
+  if (snapshot.totalTasks > 0 && snapshot.overallEfficiency >= 80) {
+    localRecommendations.push(`Mantener el ritmo de cierre actual en ${projectName}; la eficiencia esta sobre el umbral esperado.`)
+  }
+  if (localRecommendations.length === 0 && snapshot.totalTasks > 0) {
+    localRecommendations.push(`No se detectan riesgos criticos en ${projectName}; continuar monitoreando fechas proximas.`)
+  }
+
+  return localRecommendations
 })
 
 const selectedProjectPerformance = computed(() => {
@@ -234,18 +334,64 @@ const getAresAnalysis = (report) => {
   return 'El miembro mantiene un rendimiento estable. Conviene sostener el seguimiento de tareas en progreso y fechas limite proximas.'
 }
 
-const buildMemberReport = (member, dashboard, tasks, userResponse) => {
+const buildMemberRecommendations = (report, tasks) => {
+  const safeTasks = Array.isArray(tasks) ? tasks : []
+  const overdueTasks = safeTasks.filter(isTaskOverdue)
+  const highPriorityOpenTasks = safeTasks.filter(task => {
+    return normalizeStatus(task.status) !== 'DONE' && String(task.priority || '').toUpperCase() === 'HIGH'
+  })
+  const inProgressTasks = safeTasks.filter(task => normalizeStatus(task.status) === 'IN_PROGRESS')
+  const recommendations = []
+
+  if (overdueTasks.length > 0) {
+    const taskNames = overdueTasks.slice(0, 2).map(task => `'${task.title || t('home.common.untitledTask')}'`).join(', ')
+    recommendations.push(`Revisar con ${report.name} las tareas vencidas ${taskNames} y acordar una fecha realista de cierre.`)
+  }
+
+  if (highPriorityOpenTasks.length > 0) {
+    const task = highPriorityOpenTasks[0]
+    recommendations.push(`Priorizar '${task.title || t('home.common.untitledTask')}' en ${getTaskProjectName(task)} porque esta marcada como alta prioridad.`)
+  }
+
+  if (report.pendingTasks + report.inProgressTasks >= 5) {
+    recommendations.push(`Reducir la carga activa de ${report.name}: tiene ${report.pendingTasks + report.inProgressTasks} tareas sin completar.`)
+  }
+
+  if (report.score >= 85 && report.overdueTasks === 0) {
+    recommendations.push(`${report.name} mantiene buen rendimiento; puede apoyar tareas criticas del mismo proyecto si la carga se mantiene estable.`)
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push(`Mantener seguimiento semanal con ${report.name} y revisar fechas limite proximas.`)
+  }
+
+  return recommendations
+}
+
+const buildMemberReport = (member, dashboard, tasks, userResponse, projectId = 'all') => {
   const performances = Array.isArray(dashboard?.memberPerformances) ? dashboard.memberPerformances : []
   const performance = performances.find(item => Number(item.userId) === Number(member.id)) || member
   const user = userResponse?.data || userResponse || {}
   const userName = `${user.name || ''} ${user.lastName || ''}`.trim()
-  const score = Number(performance.score) || 0
   const safeTasks = Array.isArray(tasks) ? tasks : []
-  const pendingTasks = safeTasks.filter(task => ['TODO', 'TO_DO'].includes(normalizeStatus(task.status))).length
-  const inProgressTasks = safeTasks.filter(task => normalizeStatus(task.status) === 'IN_PROGRESS').length
-  const doneTasks = safeTasks.filter(task => normalizeStatus(task.status) === 'DONE').length
-  const overdueTasks = safeTasks.filter(isTaskOverdue).length
-  const tasksDelayed = Number(performance.tasksDelayed) || overdueTasks
+  const reportTasks = projectId === 'all'
+    ? safeTasks
+    : safeTasks.filter(task => Number(task.projectId) === Number(projectId))
+  const pendingTasks = reportTasks.filter(task => ['TODO', 'TO_DO'].includes(normalizeStatus(task.status))).length
+  const inProgressTasks = reportTasks.filter(task => normalizeStatus(task.status) === 'IN_PROGRESS').length
+  const doneTasks = reportTasks.filter(task => normalizeStatus(task.status) === 'DONE').length
+  const overdueTasks = reportTasks.filter(isTaskOverdue).length
+  const totalReportTasks = reportTasks.length
+  const calculatedScore = totalReportTasks > 0
+    ? Math.max(0, Math.round(((doneTasks - overdueTasks) / totalReportTasks) * 100))
+    : 0
+  const useAiPerformance = projectId === 'all'
+  const score = useAiPerformance && Number.isFinite(Number(performance.score))
+    ? Number(performance.score)
+    : calculatedScore
+  const tasksDelayed = useAiPerformance && Number.isFinite(Number(performance.tasksDelayed))
+    ? Number(performance.tasksDelayed)
+    : overdueTasks
 
   const report = {
     userId: member.id,
@@ -254,19 +400,24 @@ const buildMemberReport = (member, dashboard, tasks, userResponse) => {
     email: user.email || member.email || '',
     avatar: user.imageUrl || member.avatar || '',
     score,
-    performanceLevel: formatPerformanceLevel(performance.performanceLevel || member.performanceLabel),
-    tasksCompleted: Number(performance.tasksCompleted) || doneTasks,
+    performanceLevel: useAiPerformance
+      ? formatPerformanceLevel(performance.performanceLevel || member.performanceLabel)
+      : getCalculatedPerformanceLabel(score, totalReportTasks),
+    tasksCompleted: useAiPerformance && Number.isFinite(Number(performance.tasksCompleted))
+      ? Number(performance.tasksCompleted)
+      : doneTasks,
     tasksDelayed,
     pendingTasks,
     inProgressTasks,
     doneTasks,
     overdueTasks,
-    dominantPriority: getDominantPriority(safeTasks),
+    dominantPriority: getDominantPriority(reportTasks),
     status: getReportStatus(score, tasksDelayed, overdueTasks),
-    recommendations: Array.isArray(dashboard?.recommendations) ? dashboard.recommendations : []
+    recommendations: []
   }
 
   report.analysis = getAresAnalysis(report)
+  report.recommendations = buildMemberRecommendations(report, reportTasks)
   return report
 }
 
@@ -283,7 +434,7 @@ const openMemberReport = async (member) => {
       userService.getUserById(member.id)
     ])
 
-    selectedMemberReport.value = buildMemberReport(member, dashboard, tasks, userResponse)
+    selectedMemberReport.value = buildMemberReport(member, dashboard, tasks, userResponse, selectedPerformanceProjectId.value)
   } catch (error) {
     console.error('Error generating member report:', error.response?.data || error)
     reportError.value = 'No se pudo generar el reporte del miembro. Intenta nuevamente.'
@@ -533,24 +684,38 @@ onBeforeUnmount(() => {
               {{ $t('home.leader.downloadReport') }}
             </button>
           </div>
+          <div class="project-tabs risk-project-tabs" role="tablist" :aria-label="$t('home.leader.riskProjectTabs')">
+            <button
+              v-for="project in riskProjectTabs"
+              :key="project.id"
+              type="button"
+              class="project-tab"
+              :class="{ active: selectedRiskProjectId === project.id }"
+              role="tab"
+              :aria-selected="selectedRiskProjectId === project.id"
+              @click="selectedRiskProjectId = project.id"
+            >
+              {{ project.name }}
+            </button>
+          </div>
           <p class="card-description">
-            <span v-if="topRiskProject">{{ $t('home.leader.topRisk', { name: topRiskProject.name, status: topRiskProject.status }) }}</span>
+            <span v-if="selectedRiskProject">{{ $t('home.leader.topRisk', { name: selectedRiskProject.name, status: selectedRiskProject.status }) }}</span>
             <span v-else>{{ $t('home.leader.noRiskAssessment') }}</span>
           </p>
 
           <div class="metrics-row">
             <div class="metric">
               <div class="metric-label">{{ $t('home.leader.probabilityOfDelay') }}</div>
-              <div class="metric-value red">{{ riskData.probabilityOfDelay }}%</div>
+              <div class="metric-value red">{{ displayedRiskData.probabilityOfDelay }}%</div>
               <div class="progress-bar">
-                <div class="progress-fill red" :style="{ width: riskData.probabilityOfDelay + '%' }"></div>
+                <div class="progress-fill red" :style="{ width: displayedRiskData.probabilityOfDelay + '%' }"></div>
               </div>
             </div>
             <div class="metric">
               <div class="metric-label">{{ $t('home.leader.overallEfficiency') }}</div>
-              <div class="metric-value green">{{ riskData.overallEfficiency }}%</div>
+              <div class="metric-value green">{{ displayedRiskData.overallEfficiency }}%</div>
               <div class="progress-bar">
-                <div class="progress-fill green" :style="{ width: riskData.overallEfficiency + '%' }"></div>
+                <div class="progress-fill green" :style="{ width: displayedRiskData.overallEfficiency + '%' }"></div>
               </div>
             </div>
           </div>
@@ -560,9 +725,9 @@ onBeforeUnmount(() => {
             <div class="recommendation-content">
               <div class="recommendation-title">{{ $t('home.leader.aiRecommendations') }}</div>
               <p class="recommendation-meta">{{ $t('home.common.lastGenerated', { value: generatedAt }) }}</p>
-              <p v-if="recommendations.length === 0" class="recommendation-text">{{ $t('home.leader.noRecommendations') }}</p>
+              <p v-if="displayedRecommendations.length === 0" class="recommendation-text">{{ $t('home.leader.noRecommendations') }}</p>
               <ul v-else class="recommendations-list">
-                <li v-for="(recommendation, index) in recommendations" :key="index">{{ recommendation }}</li>
+                <li v-for="(recommendation, index) in displayedRecommendations" :key="index">{{ recommendation }}</li>
               </ul>
             </div>
           </div>

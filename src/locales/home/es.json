@@ -78,6 +78,7 @@
     "performancePerMember": "Rendimiento por miembro",
     "performanceSubtitle": "Genera reportes individuales con sugerencias de IA",
     "performanceProjectTabs": "Proyectos para rendimiento por miembro",
+    "riskProjectTabs": "Proyectos para evaluacion de riesgo",
     "allProjects": "Todos",
     "unnamedProject": "Proyecto sin nombre",
     "highPerformance": "Alto",

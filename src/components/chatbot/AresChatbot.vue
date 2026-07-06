@@ -7,6 +7,7 @@ export default {
     return {
       chatbotService: new ChatbotService(),
       isOpen: false,
+      showQuickActions: true,
       inputMessage: "",
       isSending: false,
       messages: [
@@ -48,6 +49,12 @@ export default {
     },
     closeChat() {
       this.isOpen = false;
+    },
+    toggleQuickActions() {
+      this.showQuickActions = !this.showQuickActions;
+      if (!this.showQuickActions) {
+        this.$nextTick(() => this.focusInput());
+      }
     },
     syncTheme(event) {
       this.currentTheme = event?.detail?.theme || document.documentElement.dataset.theme || localStorage.getItem("theme") || "light";
@@ -150,18 +157,32 @@ export default {
         </div>
       </div>
 
-      <div class="quick-actions">
+      <div class="quick-actions-shell" :class="{ collapsed: !showQuickActions }">
         <button
-            v-for="question in quickQuestions"
-            :key="question.key"
             type="button"
-            class="quick-action"
-            :disabled="isSending"
-            @click="sendQuickQuestion(question)"
+            class="quick-actions-toggle"
+            :aria-expanded="showQuickActions"
+            :aria-label="showQuickActions ? $t('chatbot.hideQuickQuestions') : $t('chatbot.showQuickQuestions')"
+            @click="toggleQuickActions"
         >
-          <i :class="question.icon"></i>
-          <span>{{ $t(question.labelKey) }}</span>
+          <i :class="showQuickActions ? 'pi pi-angle-down' : 'pi pi-angle-up'"></i>
         </button>
+
+        <Transition name="quick-actions-slide">
+          <div v-if="showQuickActions" class="quick-actions">
+            <button
+                v-for="question in quickQuestions"
+                :key="question.key"
+                type="button"
+                class="quick-action"
+                :disabled="isSending"
+                @click="sendQuickQuestion(question)"
+            >
+              <i :class="question.icon"></i>
+              <span>{{ $t(question.labelKey) }}</span>
+            </button>
+          </div>
+        </Transition>
       </div>
 
       <form class="chat-input-row" @submit.prevent="submitMessage">
@@ -339,10 +360,60 @@ export default {
 }
 
 .quick-actions {
-  padding: 0.85rem 1rem;
-  border-top: 1px solid #e5e7eb;
+  padding: 0 1rem 0.85rem;
   display: grid;
   gap: 0.45rem;
+}
+
+.quick-actions-shell {
+  border-top: 1px solid #e5e7eb;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.quick-actions-shell.collapsed {
+  border-bottom: 0;
+}
+
+.quick-actions-toggle {
+  width: 100%;
+  height: 1.9rem;
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-actions-toggle:hover {
+  background: #f9fafb;
+  color: #e40046;
+}
+
+.quick-actions-toggle i {
+  font-size: 1rem;
+}
+
+.quick-actions-slide-enter-active,
+.quick-actions-slide-leave-active {
+  transition: max-height 0.22s ease, opacity 0.18s ease, transform 0.22s ease;
+  overflow: hidden;
+}
+
+.quick-actions-slide-enter-from,
+.quick-actions-slide-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(0.4rem);
+}
+
+.quick-actions-slide-enter-to,
+.quick-actions-slide-leave-from {
+  max-height: 14rem;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .quick-action {
@@ -459,7 +530,7 @@ export default {
 }
 
 .dark-chatbot .chat-header,
-.dark-chatbot .quick-actions,
+.dark-chatbot .quick-actions-shell,
 .dark-chatbot .chat-input-row {
   border-color: #252b38;
 }
@@ -483,8 +554,21 @@ export default {
 }
 
 .dark-chatbot .icon-button:hover,
+.dark-chatbot .quick-actions-toggle:hover,
 .dark-chatbot .quick-action:hover:not(:disabled) {
   background: rgba(244, 63, 115, 0.08);
+}
+
+.dark-chatbot .quick-actions-shell {
+  background: #10141d;
+}
+
+.dark-chatbot .quick-actions-toggle {
+  color: #a7b0bf;
+}
+
+.dark-chatbot .quick-actions-toggle:hover {
+  color: #ff4f82;
 }
 
 .dark-chatbot .chat-thread {
